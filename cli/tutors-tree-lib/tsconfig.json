@@ -3,7 +3,7 @@
     "rootDir": "src",
     "incremental": true,
     "target": "es2019",
-    "module": "commonjs",
+    "module": "esnext",
     "declaration": true,
     "sourceMap": true,
     "composite": true,

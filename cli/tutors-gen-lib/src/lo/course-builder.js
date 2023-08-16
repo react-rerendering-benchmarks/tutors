@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCourse = void 0;
 const lr_utils_1 = require("../lr/lr-utils");
-const lo_types_1 = require("./lo-types");
+const lo_types_1 = require("tutors-tree-lib/src/lo/lo-types");
 const file_utils_1 = require("../utils/file-utils");
 const front_matter_1 = __importDefault(require("front-matter"));
 function buildCompositeLo(lo, lr, level) {

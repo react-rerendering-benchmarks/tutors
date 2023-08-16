@@ -11,6 +11,7 @@
       "type": "node",
       //"cwd": "${workspaceFolder}/test/reference-course",
       "cwd": "/Users/edeleastar/repos/tutors/courses/tutors-reference-course",
+      //"cwd" : "/Users/edeleastar/repos/tutors/courses/tutors-publish-html-regression-testing",
       "console": "integratedTerminal"
     },
     {
@@ -22,6 +23,8 @@
       ],
       "type": "node",
       //"cwd": "${workspaceFolder}/test/reference-course",
+      //"cwd" : "/Users/edeleastar/repos/tutors/courses/tutors-publish-html-regression-testing",
+      //"cwd" : "/Users/edeleastar/repos/tutors/docs/tutors-doc",
       "cwd": "/Users/edeleastar/repos/tutors/courses/tutors-reference-course",
       "console": "integratedTerminal"
     },

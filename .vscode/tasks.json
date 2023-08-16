@@ -16,6 +16,19 @@
     },
     {
       "type": "typescript",
+      "tsconfig": "cli/tutors-tree-lib/tsconfig.json",
+      "option": "watch",
+      "problemMatcher": [
+        "$tsc-watch"
+      ],
+      "group": "build",
+      "label": "tsc: watch - cli/tutors-tree-lib/tsconfig.json",
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "type": "typescript",
       "tsconfig": "cli/tutors-publish/tsconfig.json",
       "option": "watch",
       "problemMatcher": [

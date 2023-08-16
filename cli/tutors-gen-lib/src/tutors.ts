@@ -1,6 +1,5 @@
 import { buildCourse } from "./lo/course-builder";
-import { decorateCourseTree } from "./lo/course-tree";
-import { Lo } from "./lo/lo-types";
+import { Lo } from "tutors-tree-lib/src/lo/lo-types";
 import { resourceBuilder } from "./lr/resource-builder";
 import { writeFile } from "./utils/file-utils";
 import { generateNetlifyToml } from "./utils/netlify";
@@ -17,8 +16,4 @@ export function generateCourse(lo: Lo, folder: string) {
   resourceBuilder.copyAssets(folder);
   writeFile(folder, "tutors.json", JSON.stringify(lo));
   generateNetlifyToml(folder);
-}
-
-export function decorateCourse(lo: Lo) {
-  decorateCourseTree(lo);
 }

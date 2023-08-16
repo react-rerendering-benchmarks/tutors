@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import path from "path";
 import { copyFileToFolder, findFirstMatchingString, getFileName, getFileType } from "../utils/file-utils";
-import { assetTypes, LearningResource } from "./lr-types";
-import { loTypes } from "../lo/lo-types";
+import { assetTypes, LearningResource } from "tutors-tree-lib/src/lr/lr-types";
+import { loTypes } from "tutors-tree-lib/src/lo/lo-types";
 
 const loSignatures: string[] = [];
 loTypes.forEach((type) => loSignatures.push(`/${type}`));

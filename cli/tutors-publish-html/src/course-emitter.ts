@@ -1,5 +1,5 @@
 import * as sh from "shelljs";
-import { Course, Lo } from "tutors-gen-lib/src/lo/lo-types";
+import { Course, Lo } from "tutors-tree-lib/src/lo/lo-types";
 import { writeFile } from "tutors-gen-lib/src/utils/file-utils";
 import * as nunjucks from "nunjucks";
 
