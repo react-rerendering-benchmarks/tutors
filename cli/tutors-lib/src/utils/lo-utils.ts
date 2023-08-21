@@ -1,4 +1,4 @@
-import { Lo } from "./lo-types";
+import { Lo } from "../lo/lo-types";
 
 export function findLos(los: Lo[], lotype: string): Lo[] {
   const result: Lo[] = [];

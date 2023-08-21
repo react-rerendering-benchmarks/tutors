@@ -18,10 +18,9 @@ import {
   readVideoIds,
   removeLeadingHashes,
 } from "../lr/lr-utils";
-import { Course, Lo, preOrder } from "tutors-lib/src/lo/lo-types";
+import { Course, Lo, preOrder, LearningResource } from "tutors-lib/src/lo/lo-types";
 import { readWholeFile, readYamlFile } from "../utils/file-utils";
 import fm from "front-matter";
-import { LearningResource } from "tutors-lib/src/lr/lr-types";
 
 function buildCompositeLo(lo: Lo, lr: LearningResource, level: number): Lo {
   switch (lo.type) {
