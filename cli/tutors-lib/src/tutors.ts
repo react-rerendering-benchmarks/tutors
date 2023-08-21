@@ -1,5 +1,5 @@
-import { decorateCourseTree } from "./lo/lo-tree";
-import { Lo } from "./lo/lo-types";
+import { decorateCourseTree } from "./lo-tree";
+import { Lo } from "./lo-types";
 
 export const version = "3.0.12";
 

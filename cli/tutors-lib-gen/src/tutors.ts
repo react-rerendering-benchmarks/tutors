@@ -1,8 +1,8 @@
-import { buildCourse } from "./lo/course-builder";
-import { Lo } from "tutors-lib/src/lo/lo-types";
-import { resourceBuilder } from "./lr/resource-builder";
-import { writeFile } from "./utils/file-utils";
-import { generateNetlifyToml } from "./utils/netlify";
+import { buildCourse } from "./course-builder";
+import { Lo } from "tutors-lib/src/lo-types";
+import { resourceBuilder } from "./resource-builder";
+import { writeFile } from "./file-utils";
+import { generateNetlifyToml } from "./netlify";
 
 export const version = "3.0.12";
 

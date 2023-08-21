@@ -1,6 +1,6 @@
 import { Course, IconType, Lo, Panels } from "./lo-types";
-import { convertMdToHtml } from "../utils/markdown-utils";
-import { allLos } from "../utils/lo-utils";
+import { convertMdToHtml } from "./markdown-utils";
+import { allLos } from "./lo-utils";
 
 let rootCourse: Course;
 

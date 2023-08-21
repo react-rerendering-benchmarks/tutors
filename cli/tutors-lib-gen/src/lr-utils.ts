@@ -3,8 +3,8 @@ import * as sh from "shelljs";
 import fm from "front-matter";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import { imageTypes, LearningResource, VideoIdentifier, VideoIdentifiers } from "tutors-lib/src/lo/lo-types";
-import { getFileType, getHeaderFromBody, readFirstLineFromFile, readWholeFile, withoutHeaderFromBody } from "../utils/file-utils";
+import { imageTypes, LearningResource, VideoIdentifier, VideoIdentifiers } from "tutors-lib/src/lo-types";
+import { getFileType, getHeaderFromBody, readFirstLineFromFile, readWholeFile, withoutHeaderFromBody } from "./file-utils";
 
 export function getFileWithName(lr: LearningResource, file: string) {
   let foundFilePath = "";
