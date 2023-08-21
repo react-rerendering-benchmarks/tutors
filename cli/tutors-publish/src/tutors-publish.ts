@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as fs from "fs";
-import { parseCourse, generateCourse, version } from "tutors-gen-lib/src/tutors";
+import { parseCourse, generateCourse, version } from "tutors-lib-gen/src/tutors";
 
 const versionStr = `tutors-publish: ${version}`;
 console.log(versionStr);

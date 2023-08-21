@@ -3,13 +3,26 @@
   "tasks": [
     {
       "type": "typescript",
-      "tsconfig": "cli/tutors-gen-lib/tsconfig.json",
+      "tsconfig": "cli/tutors-lib/tsconfig.json",
       "option": "watch",
       "problemMatcher": [
         "$tsc-watch"
       ],
       "group": "build",
-      "label": "tsc: watch - cli/tutors-gen-lib/tsconfig.json",
+      "label": "tsc: watch - cli/tutors-lib/tsconfig.json",
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "type": "typescript",
+      "tsconfig": "cli/tutors-lib-gen/tsconfig.json",
+      "option": "watch",
+      "problemMatcher": [
+        "$tsc-watch"
+      ],
+      "group": "build",
+      "label": "tsc: watch - cli/tutors-lib-gen/tsconfig.json",
       "runOptions": {
         "runOn": "folderOpen"
       }

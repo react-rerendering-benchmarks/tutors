@@ -2,9 +2,12 @@
 
 
 # generated files from ts sources in specific ts only modules
-**/cli/tutors-gen-lib/src/**/*.js
-**/cli/tutors-gen-lib/src/**/*.js.map
-**/cli/tutors-gen-lib/src/**/*.d.ts
+**/cli/tutors-lib/src/**/*.js
+**/cli/tutors-lib/src/**/*.js.map
+**/cli/tutors-lib/src/**/*.d.ts
+**/cli/tutors-lib-gen/src/**/*.js
+**/cli/tutors-lib-gen/src/**/*.js.map
+**/cli/tutors-lib-gen/src/**/*.d.ts
 **/cli/tutors-publish/src/**/*.js
 **/cli/tutors-publish/src/**/*.js.map
 **/cli/tutors-publish/src/**/*.d.ts
