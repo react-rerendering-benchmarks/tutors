@@ -1,6 +1,7 @@
 export const imageTypes = ["png", "jpg", "jpeg", "gif", "PNG", "JPG", "JPEG", "GIF"];
 export const assetTypes = imageTypes.concat(["pdf", "zip"]);
 
+// Calendar types
 export type WeekType = {
   title: string;
   type: string;
@@ -13,6 +14,7 @@ export type Calendar = {
   weeks: WeekType[];
 };
 
+// video types
 export type VideoIdentifier = {
   service: string;
   id: string;
@@ -23,6 +25,7 @@ export type VideoIdentifiers = {
   videoIds: VideoIdentifier[];
 };
 
+// LearningResource - used in the generator to model course folder
 export type LearningResource = {
   courseRoot: string;
   route: string;
@@ -32,10 +35,12 @@ export type LearningResource = {
   type: string;
 };
 
+// Model yaml based properties
 export class Properties {
   [key: string]: string;
 }
 
+// Icon types
 export type IconType = {
   type: string;
   color: string;
@@ -53,20 +58,24 @@ export type IconNavBar = {
   bar: IconNav[];
 };
 
+// Panel collections
 export type Panels = {
   panelVideos: Lo[];
   panelTalks: Lo[];
   panelNotes: Lo[];
 };
 
+
+// Unit collections
 export type Units = {
   units: Lo[];
   sides: Lo[];
   standardLos: Lo[];
 };
 
+// Base Learning Object (Lo) type
 export type Lo = {
-  type: string;
+  type: string; // Type descriminator
   id: string; // folder name containing the lo
   title: string; // first line of markdown
   summary: string; // second three lines of markdown
@@ -90,6 +99,7 @@ export type Lo = {
   breadCrumbs?: Lo[]; // all los from course to this lo
 };
 
+// Individual lab step within a Lab
 export type LabStep = {
   title: string;
   shortTitle: string;
@@ -99,20 +109,23 @@ export type LabStep = {
   id: string;
 };
 
+// A lab is an Lo + an array of steps
 export type Lab = Lo & {
   type: "lab";
   los: LabStep[];
 };
 
+// A Talk is an Lo + a pdf file
 export type Talk = Lo & {
   type: "talk";
   pdf: string; // route to pdf for the lo
   pdfFile: string; // pdf file name
 };
 
+// An Archive is an Lo + a archive file
 export type Archive = Lo & {
   type: "archive";
-  archiveFile?: string; // archive file in the lo
+  archiveFile: string; // archive file in the lo
 };
 
 export type Web = Lo & {
