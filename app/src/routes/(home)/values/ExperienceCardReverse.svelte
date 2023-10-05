@@ -7,8 +7,8 @@
   let contentHtml = convertMdToHtml(content);
 </script>
 
-<div class="grid items-center grid-cols-1 mb-24 md:grid-cols-2 gap-y-10 md:gap-y-32 gap-x-10 md:gap-x-24">
-  <div>
+<div class="grid flex-col-reverse items-center grid-cols-1 mb-24 md:grid-cols-2 gap-y-10 md:gap-y-32 gap-x-10 md:gap-x-24">
+  <div class="order-none md:order-2">
     <h2 class="mb-4 text-2xl font-extrabold tracking-tight text-center md:leading-tight sm:text-left md:text-4xl">{title}</h2>
     <p class="mb-5 text-base text-center sm:text-left md:text-lg">
       {@html contentHtml}

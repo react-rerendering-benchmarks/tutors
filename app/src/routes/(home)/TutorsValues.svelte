@@ -11,9 +11,15 @@
       project
     </h2>
   </div>
-  <div class="w-full lg:flex justify-center my-12">
-    <LearnerExperience />
-    <EducatorExperience />
-    <DeveloperExperience />
-  </div>
+  <section class="px-4 py-24 mx-auto max-w-7xl">
+    <div class="w-full lg:flex justify-center my-12">
+      <LearnerExperience />
+    </div>
+    <div class="w-full lg:flex justify-center my-12">
+      <EducatorExperience />
+    </div>
+    <div class="w-full lg:flex justify-center my-12">
+      <DeveloperExperience />
+    </div>
+  </section>
 </div>
