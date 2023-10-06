@@ -3,6 +3,7 @@ import { studentsOnline, studentsOnlineList } from "./stores";
 import type { Course } from "$lib/services/models/lo-types";
 import type { User, UserSummary } from "$lib/services/types/auth";
 import type { StudentLoEvent } from "$lib/services/types/metrics";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 let canUpdate = false;
 
@@ -16,6 +17,7 @@ export const presenceService = {
   los: new Array<StudentLoEvent>(),
 
   sweepAndPurge(): void {
+    console.log("Sweep and Purge");
     const losToDelete: StudentLoEvent[] = [];
     this.los.forEach((lo) => {
       lo.timeout--;
@@ -65,19 +67,27 @@ export const presenceService = {
     }
   },
 
-  initService(course: Course) {
-    this.db = getDatabase();
+  initService(course: Course, supabase: SupabaseClient) {
+    console.log("Presence Service Init");
+    this.db = supabase ? supabase : getDatabase();
+    console.log("database: " +this.db)
     setInterval(this.sweepAndPurge.bind(this), 1000 * 60);
+    console.log("course: " +course.courseId);
     studentsOnline.set(0);
+    console.log("studentsOnline: " +studentsOnline);
     studentsOnlineList.set([]);
     canUpdate = false;
     setTimeout(function () {
       canUpdate = true;
     }, 5000);
     // @ts-ignore
-    let statusRef = ref(this.db, `all-course-access/${course.courseId}/visits`);
+    console.log("statusRef");
+    //let statusRef = ref(this.db, `all-course-access/${course.courseId}/visits`);
+    let statusRef = ref(this.db, `all-course-access/course-info/`);
+
     onValue(statusRef, async () => {
       if (canUpdate) {
+        console.log("visit update");
         await this.visitUpdate(course.courseId);
       }
     });

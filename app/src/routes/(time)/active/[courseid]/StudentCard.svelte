@@ -5,6 +5,8 @@
   import { layout } from "$lib/stores";
   import { cardTransition } from "$lib/ui/animations";
 
+  export let session: any;
+  export let supabase: any;
   export let lo: StudentLoEvent;
   let imageHeight = "h-32";
   let iconHeight = "80";
