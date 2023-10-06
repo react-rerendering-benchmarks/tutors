@@ -7,12 +7,10 @@
   import { get } from "svelte/store";
   import { setInitialClassState } from "@skeletonlabs/skeleton";
   import { onlineStatus, storeTheme, transitionKey, currentLo } from "$lib/stores";
-  import PageTransition from "$lib/ui/PageTransition.svelte";
   import { getKeys } from "$lib/environment";
   import { analyticsService } from "$lib/services/analytics";
-  import { initServices } from "$lib/services/tutors-startup";
   import { setupPresence, subscribePresence, unsubscribePresence, updatePresence } from "$lib/services/presence";
-  import CourseNavigator from "$lib/ui/navigators/CourseNavigator.svelte";
+  import CourseShell from "$lib/ui/app-shells/CourseShell.svelte";
 
   export let data: any;
 
@@ -88,7 +86,7 @@
 
   onMount(() => {
     setInitialClassState();
-    initServices(data.session);
+    //initServices(data.session);
     setInterval(updatePageCount, 30 * 1000);
     status = get(onlineStatus);
     const {
@@ -117,6 +115,10 @@
         el.scrollIntoView({ behavior: "smooth" });
       }
     }
+
+    if (["course", "topic", "unit"].includes($currentLo.type)) {
+      transitionKey.set(path.url.pathname);
+    }
   });
 
   afterNavigate((params) => {
@@ -131,20 +133,9 @@
 </script>
 
 <svelte:head>
-  {#if $currentLo}
-    <title>{$currentLo.title}</title>
-  {:else}
-    <title>Tutors Course Reader</title>
-  {/if}
+  <title>{$currentLo?.title}</title>
 </svelte:head>
 
-<CourseNavigator {session} {supabase}>
-  <div id="app" class="h-full overflow-hidden">
-    <div id="top" />
-    <div class="mx-auto my-4">
-      <PageTransition url={$transitionKey}>
-        <slot />
-      </PageTransition>
-    </div>
-  </div>
-</CourseNavigator>
+<CourseShell {session} {supabase}>
+  <slot />
+</CourseShell>
