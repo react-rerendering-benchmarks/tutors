@@ -69,7 +69,7 @@ export const presenceService = {
 
   initService(course: Course, supabase: SupabaseClient) {
     console.log("Presence Service Init");
-    this.db = supabase ? supabase : getDatabase();
+    this.db = supabase;
     console.log("database: " +this.db)
     setInterval(this.sweepAndPurge.bind(this), 1000 * 60);
     console.log("course: " +course.courseId);
