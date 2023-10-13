@@ -2,6 +2,7 @@ import { getApp, initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { child, get, getDatabase, ref, runTransaction, remove, set } from "firebase/database";
 import type { UserSummary } from "$lib/services/types/auth";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export function getNode(lotype: string, url: string, path: string): string {
   let node = "";
@@ -199,4 +200,60 @@ export async function readUser(courseId: string, userId: string): Promise<UserSu
     picture: await readObj(`${courseId}/users/${sanitise(userId)}/picture`),
     name: await readObj(`${courseId}/users/${sanitise(userId)}/name`)
   };
+}
+
+export function updateLastAccessSupabase(key: string, title: string) {
+  updateStr(`${key}/last`, new Date().toLocaleString());
+  updateStr(`${key}/title`, title);
+}
+
+export function updateVisitsSupabase(key: string) {
+  updateCountValue(`${key}/visits`);
+}
+
+export function updateCountSupabase(key: string) {
+  updateCountValue(`${key}/count`);
+}
+
+export async function readValueSupabase(key: string, supabase: SupabaseClient): Promise<string> {
+  console.log("key", key);
+  console.log("supabase", supabase);
+  //This will require the JSON manipulation
+  const snapShot = await supabase.from("all-course-access").select(`course_info`).eq( key)
+  console.log("snapShot", snapShot)
+  return snapShot;
+}
+
+export async function readVisitsSupabase(courseId: string): Promise<number> {
+  try {
+    const visits = await readValue(`${courseId}/visits`);
+    return parseInt(visits);
+  } catch (error: any) {
+    console.log(`TutorStore Error: ${error.message}`);
+  }
+}
+
+/**
+ * A supabase function to query JSON data
+ */
+async function queryData(tableName: string, courseTitle: string, supabase: SupabaseClient) {
+  try {
+    // Your SQL query to filter the JSON data
+    const sql = `
+      SELECT *
+      FROM ${tableName}
+      WHERE course_info string-> ${courseTitle} IS NOT NULL;
+    `;
+
+    // Execute the query
+    const { data, error } = await supabase.from('your_table').select(sql);
+
+    if (error) {
+      console.error('Error executing query:', error.message);
+    } else {
+      console.log('Query result:', data);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
 }
