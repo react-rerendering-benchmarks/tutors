@@ -111,20 +111,21 @@ export const presenceService = {
     }, 5000);
     console.log("data: ", data);
     if (data.session) {
-      const learnObj = await data.supabase.from("all-course-access").select(`course_info`).eq("id", data.session.user.id);
-      const lo = learnObj?.data[0]?.course_info?.[course.title];
+      const learnObj = await data.supabase.from("all-course-access").select(`course_info`).eq("id", course.title.trim());
+      console.log("learnObj: ", learnObj);
+      const lo = learnObj?.data[0]?.course_info;
       console.log("lo: ", lo);
       if (learnObj.data.length > 0) {
         const event: StudentLoEvent = {
-          studentName: lo.user.fullName,
-          studentId: lo.user.id,
-          studentEmail: lo.user.studentEmail,
-          studentImg: lo.user.avatar,
-          courseTitle: lo.learningEvent.course_title,
-          loTitle: lo.learningEvent.title,
-          loImage: lo.learningEvent.img,
-          loRoute: lo.learningEvent.subRoute,
-          loIcon: lo.learningEvent.icon,
+          studentName: lo[course.title].user.fullName,
+          studentId: lo[course.title].user.id,
+          studentEmail: lo[course.title].user.studentEmail,
+          studentImg: lo[course.title].user.avatar,
+          courseTitle: lo[course.title].learningEvent.course_title,
+          loTitle: lo[course.title].learningEvent.title,
+          loImage: lo[course.title].learningEvent.img,
+          loRoute: lo[course.title].learningEvent.subRoute,
+          loIcon: lo[course.title].learningEvent.icon,
           timeout: 7
         };
         console.log("id: ", event);
@@ -143,7 +144,7 @@ export const presenceService = {
         studentsOnline.set(this.los.length);
       }
       // }
-       const { data: courseInfo } = await data.supabase.from("all-course-access").select(`course_info`).eq("id", data.session.user.id);
+       const { data: courseInfo } = await data.supabase.from("all-course-access").select(`course_info`).eq("id", course.title.trim());
        /**
         * THIS COSE BELOW COMMENTED OUT IS ANOTHER VARIATION ON HOW SUPABASE ALLOWS  YOU TO MANIPULATE JSON DATA ON THE FLY
         */
@@ -161,9 +162,10 @@ export const presenceService = {
 
       console.log("Course", course);
       if (!courseInfo || courseInfo.length === 0 || courseInfo === null) {
-        await data.supabase.from("all-course-access").insert([
+        console.log("Inserting...");
+      await data.supabase.from("all-course-access").insert([
           {
-            id: data.session.user.id,
+            id: course.title.trim(),
             course_info: {
               [course.title]: {
                 count: 1,
@@ -205,10 +207,10 @@ export const presenceService = {
         // const courseIndex = courseList.id.findIndex((c) => 
         // c.id === data.session.user.id);
 
-        if (courseList[course.title]=== course.title) {
+        if (courseList[course.title]=== course.title.trim()) {
           console.log("courseList", courseList[course.title]);
           courseList.metadata.push({
-            id: data.session.user.id,
+            id: course.title.trim(),
             course_info: {
               [course.title]: {
                 count: 1,
@@ -247,7 +249,8 @@ export const presenceService = {
           );
           console.log("pushing...", courseList);
         } else {
-          console.log("updating...", courseList)
+          console.log("updating...", courseList);
+
 
           courseList[course.title].last = new Date().toISOString();
           courseList[course.title].learningEvent.course_title = course.title; 
@@ -260,7 +263,7 @@ export const presenceService = {
           console.log("updating...");
         }
         console.log("new courseList", courseList)
-        await data.supabase.from("all-course-access").update({ course_info: courseList }).eq("id", data.session.user.id);
+        await data.supabase.from("all-course-access").update({ course_info: courseList }).eq("id", course.title.trim());
         console.log("updated")
       }
     }

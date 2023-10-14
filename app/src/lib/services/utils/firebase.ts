@@ -217,11 +217,10 @@ export function updateCountSupabase(key: string) {
 
 export async function readValueSupabase(key: string, supabase: SupabaseClient): Promise<string> {
   console.log("key", key);
-  console.log("supabase", supabase);
   //This will require the JSON manipulation
-  const snapShot = await supabase.from("all-course-access").select(`course_info`).eq( key)
+  const { data: snapShot, error } = await supabase.from('all-course-access').select(`course_info`).eq("id", key)
   console.log("snapShot", snapShot)
-  return snapShot;
+  return snapShot ? snapShot : null;
 }
 
 export async function readVisitsSupabase(courseId: string): Promise<number> {
@@ -230,30 +229,5 @@ export async function readVisitsSupabase(courseId: string): Promise<number> {
     return parseInt(visits);
   } catch (error: any) {
     console.log(`TutorStore Error: ${error.message}`);
-  }
-}
-
-/**
- * A supabase function to query JSON data
- */
-async function queryData(tableName: string, courseTitle: string, supabase: SupabaseClient) {
-  try {
-    // Your SQL query to filter the JSON data
-    const sql = `
-      SELECT *
-      FROM ${tableName}
-      WHERE course_info string-> ${courseTitle} IS NOT NULL;
-    `;
-
-    // Execute the query
-    const { data, error } = await supabase.from('your_table').select(sql);
-
-    if (error) {
-      console.error('Error executing query:', error.message);
-    } else {
-      console.log('Query result:', data);
-    }
-  } catch (error) {
-    console.error('Error:', error);
   }
 }

@@ -30,8 +30,9 @@
         // analyticsService.updateLogin(data.course.courseId, data.session);
       }
     }
+    console.log("initSupabaseService onMount function", data);
 
-    presenceService.initSupabaseService(supabase, session);
+    presenceService.initSupabaseService(data.course, data);
 
     // if (getKeys().firebase.apiKey !== "XXX") {
     //   initFirebase(getKeys().firebase);

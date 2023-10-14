@@ -111,7 +111,7 @@ export const analyticsService = {
     const courseId = course.courseUrl.substring(0, course.courseUrl.indexOf("."));
     const key = `${course.title}/user/${sanitise(session.user.email)}`;
     const status = await readValueSupabase(course.title,supabase);
-    console.log("status", status);
+    console.log("status of", status || "online");
     return status || "online";
   },
 
