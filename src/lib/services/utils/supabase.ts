@@ -2,7 +2,7 @@ import type { Course, Lo } from "../models/lo-types";
 import { writable, type Writable } from "svelte/store";
 import type { SupabaseCourse, SupabaseLearningObject, SupabaseStudent, ResponseData } from "$lib/services/types/supabase";
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from "$env/static/public";
-import { db } from "$lib/db/client";
+import {db } from "$lib/db/client";
 import { currentSupabaseCourse, supabaseCourses, supabaseLearningObjects, supabaseStudents } from "$lib/stores";
 import type { User } from "@supabase/supabase-js";
 import type { LoEvent, LoUser } from "../types/presence";
@@ -379,7 +379,7 @@ export async function updateLo(course: Course, currentLo: any): Promise<any> {
         name: currentLo.courseTitle,
         date_last_accessed: new Date().toISOString(),
         lo_img: currentLo.img
-      }).eq('id', currentLo.loRoute);
+      }).eq('id', currentLo.route);
 
     if (error) {
       console.error('Error adding learning object:', error);
@@ -392,7 +392,7 @@ export async function updateLo(course: Course, currentLo: any): Promise<any> {
         status: 201, // No Content (Success)
         message: 'Added course successfully',
       };
-      console.log(`Learning object successfully updated for ${currentLo.loRoute}`);
+      console.log(`Learning object successfully updated for ${currentLo.route}`);
     }
   } catch (error) {
     console.error('Error adding learning object:', error);
