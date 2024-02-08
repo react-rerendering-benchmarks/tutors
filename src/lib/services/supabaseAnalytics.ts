@@ -1,9 +1,8 @@
 import { get } from "svelte/store";
-import { updateLo } from "$lib/services/utils/all-course-access";
 import type { Course, Lo } from "$lib/services/models/lo-types";
 import type { TokenResponse } from "$lib/services/types/auth";
 import { currentCourse, currentLo, currentUser, onlineStatus } from "$lib/stores";
-import { updateCalendar, readValue, supabaseService, updateLastAccess, supabaseUpdateStr, supabaseAddStudent, supabaseSanitise, updatePageActive, updatePageLoads } from "$lib/services/utils/supabase";
+import { getUsers, updateCalendar, readValue, supabaseService, supabaseUpdateStr, supabaseAddStudent, supabaseSanitise, supabaseUpdateStudent, updateStudentCourseLoInteractionPageActive, updateStudentPageLoads, updateStudentPageActive, updateStudentLastAccess} from "$lib/services/utils/supabase";
 import { presenceService } from "./presence";
 import { PUBLIC_SUPABASE_URL } from "$env/static/public";
 
@@ -26,7 +25,6 @@ export const analyticsService = {
 
   learningEvent(params: Record<string, string>, session: TokenResponse) {
     try {
-      console.log("Supabase Inside learningEvent");
       if (params.loid) {
         this.loRoute = supabaseSanitise(params.loid);
       }
@@ -38,7 +36,6 @@ export const analyticsService = {
 
   setOnlineStatus(status: boolean, session: TokenResponse) {
     try {
-      console.log("Supabase Inside setOnlineStatus");
       const onlineStatus = status ? "online" : "offline";
       const key = session.user.id;
       supabaseUpdateStr(key, onlineStatus);
@@ -49,7 +46,6 @@ export const analyticsService = {
 
   async getOnlineStatus(course: Course, session: TokenResponse): Promise<string | undefined> {
     try {
-      console.log("Supabase Inside getOnlineStatus");
       if (!course || !user) {
         return "online";
       }
@@ -63,18 +59,15 @@ export const analyticsService = {
 
   reportPageLoad(session: TokenResponse) {
     try {
-
       if (!lo || PUBLIC_SUPABASE_URL === "XXX") return;
-      updateLastAccess("course_id", course.courseId, "course");
-      updatePageLoads("course_id", "course", course.courseId, 1);
+      updateStudentLastAccess("course_id", course.courseId, "course");
+      updateStudentPageLoads("course_id", "course", course.courseId, 1);
       supabaseService.storeLoEvent(course, lo, get(onlineStatus), session?.user);
       presenceService.sendLoEvent(course, lo, get(onlineStatus), session?.user);
-      console.log("Supabase Inside reportPageLoad");
       if (session) {
-        console.log("Supabase Inside session");
         supabaseService.storeCourseUsersLoToSupababse(course, lo, get(onlineStatus), session?.user);
-        updatePageLoads("id", "students", session.user.user_metadata.user_name, 1);
-        updateLastAccess("id", session.user.user_metadata.user_name, "students",);
+        updateStudentPageLoads("id", "students", session.user.user_metadata.user_name, 1);
+        updateStudentLastAccess("id", session.user.user_metadata.user_name, "students",);
       }
     } catch (error: any) {
       console.log(`TutorStore Error: ${error.message}`);
@@ -84,35 +77,25 @@ export const analyticsService = {
   updatePageCount(session: TokenResponse) {
     try {
       if (!lo) return;
-      console.log("Supabase Inside updatePageCount");
-      updateLastAccess("id", this.loRoute, "learning-object");
-      updatePageActive("course_id", "course", course.courseId, 1);
-
+      updateStudentCourseLoInteractionPageActive(course.courseId, session?.user.user_metadata.user_name,lo.route, 1);
+      updateStudentPageActive("course_id", "course", course.courseId, 1);
       if (session?.user) {
         supabaseService.storeLoEvent(course, lo, get(onlineStatus), session?.user);
-        supabaseService.storeCourseUsersLoToSupababse(course, lo, get(onlineStatus), session?.user);
-        updatePageActive("id", "students", session.user.user_metadata.user_name, 1);
-        updateLastAccess("id", session.user.user_metadata.user_name, "students",);
+        updateStudentPageLoads("id", "students", session.user.user_metadata.user_name, 1);
+        updateStudentLastAccess("id", session.user.user_metadata.user_name, "students",);
+        updateCalendar(course.calendar?.weeks, session.user.user_metadata.user_name);
       }
     } catch (error: any) {
       console.log(`TutorStore Error: ${error.message}`);
     }
   },
 
-  updateLogin(courseId: string, session: any) {
+  async updateLogin(courseId: string, session: any) {
     try {
-      console.log("Supabase Inside updateLogin", session);
-      supabaseAddStudent(course, session.user);
+      const student = await getUsers(session.user.user_metadata.user_name);
+      student ? supabaseUpdateStudent(session.user) : supabaseAddStudent(session.user);
     } catch (error: any) {
       console.log(`TutorStore Error: ${error.message}`);
     }
-    // const key = `${courseId}/users/${sanitise(session.user.email)}`;
-    // updateStr(`${key}/email`, session.user.email);
-    // updateStr(`${key}/name`, session.user.user_metadata.full_name);
-    // updateStr(`${key}/id`, session.user.id);
-    // updateStr(`${key}/nickname`, session.user.user_metadata.preferred_username);
-    // updateStr(`${key}/picture`, session.user.user_metadata.avatar_url);
-    // updateStr(`${key}/last`, new Date().toString());
-    // updateCountValue(`${key}/count`);
   }
 };

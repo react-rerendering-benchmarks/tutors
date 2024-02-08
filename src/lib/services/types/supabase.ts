@@ -29,4 +29,17 @@ export interface SupabaseStudent {
   export interface ResponseData {
     status: number;
     message: string;
+    data: {};
   }
+
+  export interface WeekData {
+    [date: string]: {
+        title: string | number;
+        type: string;
+    };
+}
+
+export interface SemesterData {
+    title: string;
+    weeks: WeekData[];
+}
