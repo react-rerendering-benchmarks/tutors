@@ -37,11 +37,6 @@ import { page } from "$app/stores";
 //   )
 //   .subscribe()
 
-export function supabaseSanitise(str: string): string {
-    // eslint-disable-next-line no-useless-escape
-    return str.replace(/[`#$.\[\]]/gi, "*");
-}
-
 export async function supabaseUpdateStr(key: string, str: string) {
     try {
         const { data, error } = await db
@@ -80,25 +75,24 @@ export async function updateCalendar(weeks: any, id: string) {
         const returnedData = await getCalendarData(id)
         if (returnedData === undefined || returnedData.length === 0) {
 
-            const weekIdPromise = getCurrentWeekTitle(weeks);
-            const pageActivePromise = updatePageActive("student_id", "calendar", id, 1);
-            const pageLoadsPromise = updatePageLoads("student_id", "calendar", id, 1);
+            const pageActivePromise = getActivePageTotal("student_id", "calendar", id, 1);
+            const pageLoadsPromise = getActiveLoadsTotal("student_id", "calendar", id, 1);
 
             // Await the promises here
-            const [weekId, pageActive, pageLoads] = await Promise.all([weekIdPromise, pageActivePromise, pageLoadsPromise]);
+            const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
 
             const { data, error } = await db
                 .from('calendar')
                 .insert({
-                    id: weekId,
+                    id: new Date(),
                     student_id: id,
                     page_active: pageActive,
                     page_loads: pageLoads,
-                    date_last_accessed: new Date().toISOString(),
+                    date_last_accessed: new Date().getTime(),
                 });
         } else {
-            const pageActivePromise = updatePageActive("student_id", "calendar", id, 1);
-            const pageLoadsPromise = updatePageLoads("student_id", "calendar", id, 1);
+            const pageActivePromise = getActivePageTotal("student_id", "calendar", id, 1);
+            const pageLoadsPromise = getActiveLoadsTotal("student_id", "calendar", id, 1);
             const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
             await db
                 .from('calendar')
@@ -116,7 +110,6 @@ export async function updateCalendar(weeks: any, id: string) {
     }
 }
 
-
 /********************************************
  * *********** Course Functions *************
  */
@@ -132,14 +125,14 @@ export const loadCourses = async () => {
     }
 };
 
-export async function addCourse(course: Course): Promise<ResponseData> {
+export async function addCourse(course: Course){
     try {
         // Validate input data
         if (!course) {
             throw new Error('Invalid input data. courseId and title must be provided.');
         }
-        const pageActivePromise = updatePageActive("course_id", "course", course.courseId, 1);
-        const pageLoadsPromise = updatePageLoads("course_id", "course", course.courseId, 1);
+        const pageActivePromise = getActivePageTotal("course_id", "course", course.courseId, 1);
+        const pageLoadsPromise = getActiveLoadsTotal("course_id", "course", course.courseId, 1);
         const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
 
         // Insert the course
@@ -158,42 +151,23 @@ export async function addCourse(course: Course): Promise<ResponseData> {
         if (data) {
             supabaseCourses.update(cur => [...cur, data[0]]);
         }
-
-        if (error) {
-            return {
-                status: 400, // Bad Request
-                message: 'Failed to add course',
-                data: { "message": error.message } // Include error message in data field
-            };
-        } else {
-            return {
-                status: 201, // Created
-                message: 'Course added successfully',
-                data: { data }
-            };
-        }
     } catch (error) {
         console.log('Error adding course:', error);
-        return {
-            status: 500, // Internal Server Error
-            message: 'An unexpected error occurred while adding course',
-            data: { "message": error } // Include error message in data field
-        };
     }
 };
 
-export async function updateCourse(course: Course): Promise<ResponseData> {
+export async function updateCourse(course: Course){
     try {
         // Validate input data
         if (!course) {
             throw new Error('Invalid input data. courseId must be provided.');
         }
 
-        const pageActivePromise = updatePageActive("course_id", "course", course.courseId, 1);
-        const pageLoadsPromise = updatePageLoads("course_id", "course", course.courseId, 1);
+        const pageActivePromise = getActivePageTotal("course_id", "course", course.courseId, 1);
+        const pageLoadsPromise = getActiveLoadsTotal("course_id", "course", course.courseId, 1);
         const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
         // Update the course
-        const { error } = await db
+        await db
             .from('course')
             .update({
                 page_active: pageActive,
@@ -202,29 +176,8 @@ export async function updateCourse(course: Course): Promise<ResponseData> {
                 img: course.img,
             })
             .eq('course_id', course.courseId);
-
-        // Handle update result
-        if (error) {
-            console.error('Error updating course:', error);
-            return {
-                status: 400, // Bad Request
-                message: 'Failed to update course',
-                data: { "message": error.message }// Include error message in data field
-            };
-        } else {
-            return {
-                status: 200, // OK
-                message: 'Course updated successfully',
-                data: { courseId: course.courseId } // Include updated courseId in data field
-            };
-        }
     } catch (error) {
         console.error('Error updating course:', error);
-        return {
-            status: 500, // Internal Server Error
-            message: 'An unexpected error occurred while updating course',
-            data: { "message": error } // Include error message in data field
-        };
     }
 };
 
@@ -253,7 +206,6 @@ export async function getUserCourses(courseId: string, studentId: string, loId: 
     }
 };
 
-
 export async function getCourses(courseId: string): Promise<any> {
     if (!courseId) return;
     const { data, error } = await db.from('course').select().eq('course_id', courseId);
@@ -269,17 +221,18 @@ export async function getCourses(courseId: string): Promise<any> {
 
 export async function getUsers(studentId: string): Promise<any> {
     if (!studentId) return;
-    const { data, error } = await db.from('students').select().eq('id', studentId);
-    if (error) {
-        return console.error(error);
+    try {
+        const { data } = await db.from('students').select().eq('id', studentId);
+        return data;
+    } catch (error) {
+        console.error('Error fetching student:', error);
     }
-    return data;
 };
 
-export async function supabaseAddStudent(userDetails: User): Promise<ResponseData> {
+export async function supabaseAddStudent(userDetails: User) {
     try {
-        const pageActivePromise = updatePageActive("id", "students", userDetails.user_metadata.user_name, 1);
-        const pageLoadsPromise = updatePageLoads("id", "students", userDetails.user_metadata.user_name, 1);
+        const pageActivePromise = getActivePageTotal("id", "students", userDetails.user_metadata.user_name, 1);
+        const pageLoadsPromise = getActiveLoadsTotal("id", "students", userDetails.user_metadata.user_name, 1);
         const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
         const { data, error: insertError } = await db
             .from('students')
@@ -296,34 +249,15 @@ export async function supabaseAddStudent(userDetails: User): Promise<ResponseDat
         if (data) {
             supabaseStudents.update(cur => [...cur, data[0]]);
         }
-
-        if (insertError) {
-            console.error('Error adding Student:', insertError);
-            return {
-                status: 400, // Bad Request
-                message: 'Adding student failed',
-                data: { "message": insertError.message } // Include error message in data field
-            };
-        } else {
-            return {
-                status: 201, // Created
-                message: 'Added student successfully',
-                data: { data }  // Include inserted student data if available
-            };
-        }
     } catch (error) {
-        return {
-            status: 500, // Internal Server Error
-            message: 'An unexpected error occurred while adding student',
-            data: { "message": error }// Include error message in data field
-        };
+        console.error('Error adding Student:', error);
     }
 }
 
-export async function supabaseUpdateStudent(userDetails: User): Promise<ResponseData> {
+export async function supabaseUpdateStudent(userDetails: User) {
     try {
-        const pageActivePromise = updatePageActive("id", "students", userDetails.user_metadata.user_name, 1);
-        const pageLoadsPromise = updatePageLoads("id", "students", userDetails.user_metadata.user_name, 1);
+        const pageActivePromise = getActivePageTotal("id", "students", userDetails.user_metadata.user_name, 1);
+        const pageLoadsPromise = getActiveLoadsTotal("id", "students", userDetails.user_metadata.user_name, 1);
         const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
         const { data, error: updateError } = await db
             .from('students')
@@ -338,28 +272,8 @@ export async function supabaseUpdateStudent(userDetails: User): Promise<Response
             .eq('id', userDetails.user_metadata.user_name);
 
         if (data) supabaseStudents.update(cur => [...cur, data[0]]);
-
-        if (updateError) {
-            console.error('Error updating Student:', updateError);
-            return {
-                status: 400, // Bad Request
-                message: 'Updating student failed',
-                data: { "message": updateError.message }// Include error message in data field
-            };
-        } else {
-            return {
-                status: 204, // No Content (Success)
-                message: 'Updating student successfully',
-                data: { id: userDetails.user_metadata.user_name }
-            };
-        }
     } catch (error) {
         console.error('Error updating Student', error);
-        return {
-            status: 500, // Internal Server Error
-            message: 'An unexpected error occurred while updating student',
-            data: { "message": error } // Include error message in data field
-        };
     }
 }
 
@@ -372,7 +286,6 @@ export async function insertStudentCourseLoTable(courseId: string, studentId: st
         const pageActivePromise = getNumOfStudentCourseLoPageActive(courseId, studentId, loId, 1);
         const pageLoadsPromise = getNumOfStudentCourseLoPageLoads(courseId, studentId, loId, 1);
         const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
-        console.log("pageActive", pageActive, "pageLoads", pageLoads)
         await db
             .from('student-course-interaction')
             .insert({
@@ -440,7 +353,7 @@ export const updateStudentLastAccess = async (key: string, id: string, table: an
     }
 };
 
-export async function addLo(course: Course, currentLo: Lo): Promise<ResponseData> {
+export async function addLo(currentLo: Lo) {
     try {
         // Insert the learning object
         const { error } = await db
@@ -453,34 +366,13 @@ export async function addLo(course: Course, currentLo: Lo): Promise<ResponseData
                 parent: currentLo.parentLo ? currentLo.parentLo.route : null,
                 lo_img: currentLo.img
             });
-
-        // Handle insertion result
-        if (error) {
-            console.error('Error adding learning object:', error);
-            return {
-                status: 400, // Bad Request
-                message: 'Failed to add learning object',
-                data: { "message": error.message }
-            };
-        } else {
-            return {
-                status: 201, // Created
-                message: 'Learning object added successfully',
-                data: { id: currentLo.route } // Optionally include inserted ID or other relevant data
-            };
-        }
     } catch (error) {
         console.error('Error adding learning object:', error);
-        return {
-            status: 500, // Internal Server Error
-            message: 'An unexpected error occurred while adding learning object',
-            data: { "message": error }
-        };
     }
 };
 
 
-export async function updateLo(course: Course, currentLo: Lo): Promise<ResponseData> {
+export async function updateLo(currentLo: Lo) {
     try {
         // Validate input data
         if (!currentLo) {
@@ -488,35 +380,15 @@ export async function updateLo(course: Course, currentLo: Lo): Promise<ResponseD
         }
 
         // Update the learning object
-        const { error } = await db
+        await db
             .from('learning-object')
             .update({
                 date_last_accessed: new Date().toISOString(),
             })
             .eq('id', currentLo.route);
 
-        // Handle update result
-        if (error) {
-            console.error('Error updating learning object:', error);
-            return {
-                status: 400, // Bad Request
-                message: 'Failed to update learning object',
-                data: { "message": error.message }
-            };
-        } else {
-            return {
-                status: 200, // OK
-                message: 'Learning object updated successfully',
-                data: { id: currentLo.route } // Optionally include updated ID or other relevant data
-            };
-        }
     } catch (error) {
         console.error('Error updating learning object:', error);
-        return {
-            status: 500, // Internal Server Error
-            message: 'An unexpected error occurred while updating learning object',
-            data: { "message": error }
-        };
     }
 };
 
@@ -541,9 +413,7 @@ export const updateStudentCourseLoInteractionPageActive = async (courseId: strin
             .update({ 'page_active': newCount })
             .eq('student_id', studentId)
             .eq('course_id', courseId)
-            .eq('lo_id', loId)
-            .single();
-
+            .eq('lo_id', loId);
 
     } catch (error: any) {
         console.error(`Error updating how long the page is active for student-course-interaction: ${error.message}`);
@@ -569,8 +439,7 @@ export const updateStudentCourseLoInteractionPageLoads = async (courseId: string
             .update({ 'page_loads': newCount })
             .eq('student_id', studentId)
             .eq('course_id', courseId)
-            .eq('lo_id', loId)
-            .single();
+            .eq('lo_id', loId);
 
     } catch (error: any) {
         console.error(`Error updating how long the page is active for student-course-interaction: ${error.message}`);
@@ -579,7 +448,6 @@ export const updateStudentCourseLoInteractionPageLoads = async (courseId: string
 
 export const getNumOfStudentCourseLoPageActive = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
     try {
-        console.log("courseId", courseId, "studentId", studentId, "loId", loId, "incrementBy", incrementBy)
         const { data, error } = await db
             .from('student-course-interaction')
             .select('page_active')
@@ -588,7 +456,6 @@ export const getNumOfStudentCourseLoPageActive = async (courseId: string, studen
             .eq('lo_id', loId)
             .single();
 
-        console.log("data", data, "error", error)
         if (data === null) {
             console.warn('No data returned from Supabase.');
         }
@@ -596,7 +463,6 @@ export const getNumOfStudentCourseLoPageActive = async (courseId: string, studen
         let currentCount: number = 0;
         currentCount = data?.page_active || 0;
         const newCount = currentCount + incrementBy;
-        console.log("newCount", newCount)
         return newCount;
 
     } catch (error: any) {
@@ -624,10 +490,7 @@ export const getNumOfStudentCourseLoPageLoads = async (courseId: string, student
     }
 };
 
-/********************************
- * ************* Page Active and Loads *************
- */
-export const updatePageActive = async (key: string, table: string, id: string, incrementBy: number) => {
+export const getActivePageTotal = async (key: string, table: string, id: string, incrementBy: number) => {
     try {
         const { data, error } = await db
             .from(table)
@@ -645,7 +508,7 @@ export const updatePageActive = async (key: string, table: string, id: string, i
     }
 };
 
-export const updatePageLoads = async (key: string, table: string, id: string, incrementBy: number) => {
+export const getActiveLoadsTotal = async (key: string, table: string, id: string, incrementBy: number) => {
     try {
         const { data, error } = await db
             .from(table)
@@ -654,12 +517,9 @@ export const updatePageLoads = async (key: string, table: string, id: string, in
             .single();
 
         let currentCount: number = 0;
-
         currentCount = data?.page_loads || 0;
         const newCount = currentCount + incrementBy;
         return newCount;
-
-
 
     } catch (error: any) {
         console.error(`Error updating count for table ${table}: ${error.message}`);
@@ -675,7 +535,6 @@ export const updateStudentPageLoads = async (key: string, table: string, id: str
             .single();
 
         let currentCount: number = 0;
-
         currentCount = data?.page_loads || 0;
         const newCount = currentCount + incrementBy;
 
@@ -713,58 +572,50 @@ export const updateStudentPageActive = async (key: string, table: string, id: st
 };
 
 export const supabaseService = {
-    currentUserId: "",
-
-    async storeLoEvent(course: Course, currentLo: Lo, onlineStatus: boolean, userDetails: any) {
+    async insertOrUpdateLoEvent(currentLo: Lo) {
         try {
             const { data, error } = await db.from('learning-object').select().eq('id', currentLo.route);
             if (data === null || data.length === 0) {
-                await addLo(course, currentLo);
+                await addLo(currentLo);
             } else {
-                await updateLo(course, currentLo);
+                await updateLo(currentLo);
             }
         } catch (error) {
-            console.error("storeLoEvent: ", error);
+            console.error("insertOrUpdateLoEvent: ", error);
         }
     },
 
-    async storeToCourseUsers(course: Course, userDetails: User) {
+    async insertOrUpdateStudent(userDetails: User) {
         try {
             if (userDetails.user_metadata.full_name === "Anon") return;
-            let returnedStudent = await getUsers(userDetails.user_metadata.user_name);
+            const returnedStudent = await getUsers(userDetails.user_metadata.user_name);
 
             if (returnedStudent === undefined || returnedStudent.length === 0) {
-                const successAddStudent: ResponseData = await supabaseAddStudent(userDetails);
+                await supabaseAddStudent(userDetails);
             } else {
-                const successUpdateStudent: ResponseData = await supabaseUpdateStudent(userDetails)
+                await supabaseUpdateStudent(userDetails)
             }
+
         } catch (error) {
             console.error("Student Course Interaction Table error: ", error);
         }
     },
 
-    async storeCourseUsersLoToSupababse(course: Course, lo: Lo, onlineStatus: boolean, userDetails: User) {
+    async storeStudentCourseLearningObjectInSupabase(course: Course, lo: Lo, onlineStatus: boolean, userDetails: User) {
         try {
             if (userDetails.user_metadata.full_name === "Anon") return;
-
-            const returnedCourses = await getCourses(course.courseId);
-            if (returnedCourses === null || returnedCourses.length === 0) {
-                await addCourse(course);
-                await this.storeToCourseUsers(course, userDetails);
-                await this.storeLoEvent(course, lo, onlineStatus, userDetails);
-            } else {
-                await updateCourse(course);
-                await this.storeToCourseUsers(course, userDetails);
-                await this.storeLoEvent(course, lo, onlineStatus, userDetails);
-            }
-            const getInteractionData = await getUserCourses(course.courseId, userDetails.user_metadata.user_name, lo.route);
-            await this.dealWithInteractionData(course, lo, getInteractionData, userDetails);
+            await this.insertOrUpdateCourse(course);
+            await this.insertOrUpdateStudent(userDetails);
+            await this.insertOrUpdateLoEvent(lo);
+            await this.handleInteractionData(course, lo, userDetails);
         } catch (error) {
-            console.error("storeCourseUsersLoToSupababse: ", error);
+            console.error("storeStudentCourseLearningObjectInSupabase: ", error);
         }
     },
 
-    async dealWithInteractionData(course: Course, lo: Lo, getInteractionData: any, userDetails: User) {
+    async handleInteractionData(course: Course, lo: Lo, userDetails: User) {
+        const getInteractionData = await getUserCourses(course.courseId, userDetails.user_metadata.user_name, lo.route);
+
         if (getInteractionData === null || getInteractionData.length === 0) {
             await insertStudentCourseLoTable(course.courseId, userDetails.user_metadata.user_name, lo.route);
         } else {
@@ -772,7 +623,7 @@ export const supabaseService = {
         }
     },
 
-    async storeToSupabaseCourse(course: any) {
+    async insertOrUpdateCourse(course: any) {
         try {
             const returnedCourses = await getCourses(course.courseId);
             if (returnedCourses === null || returnedCourses.length === 0) {
@@ -780,9 +631,8 @@ export const supabaseService = {
             } else {
                 await updateCourse(course);
             }
-
         } catch (error) {
-            console.error("StoreToSupabaseCourse error: ", error);
+            console.error("insertOrUpdateCourse error: ", error);
         }
     },
 };
@@ -814,22 +664,4 @@ function getTutorsTimeId() {
         window.localStorage.tutorsTimeId = generateTutorsTimeId();
     }
     return window.localStorage.tutorsTimeId;
-}
-
-async function getCurrentWeekTitle(data: SemesterData): Promise<string | number | undefined> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set hours to midnight for precise comparison
-
-    const nextWeek = new Date();
-    nextWeek.setDate(today.getDate() + 7);
-    nextWeek.setHours(0, 0, 0, 0);
-
-    const weekData = data.find(week => {
-        const weekDateKey = Object.keys(week)[0];
-        const weekDate = new Date(weekDateKey);
-        weekDate.setHours(0, 0, 0, 0);
-        return weekDate >= today && weekDate < nextWeek;
-    });
-
-    return weekData ? weekData[Object.keys(weekData)[0]].title : undefined;
 }
