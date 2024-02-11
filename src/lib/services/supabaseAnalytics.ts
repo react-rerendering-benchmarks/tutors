@@ -2,9 +2,8 @@ import { get } from "svelte/store";
 import type { Course, Lo } from "$lib/services/models/lo-types";
 import type { TokenResponse } from "$lib/services/types/auth";
 import { currentCourse, currentLo, currentUser, onlineStatus } from "$lib/stores";
-import { getUsers, updateCalendar, readValue, supabaseService, supabaseUpdateStr, supabaseAddStudent, supabaseUpdateStudent, updateStudentCourseLoInteractionPageActive, updateStudentPageActive, updateStudentLastAccess, updateStudentPageLoads } from "$lib/services/utils/supabase";
+import { updateCalendar, readValue, supabaseService, supabaseUpdateStr, supabaseAddStudent, supabaseUpdateStudent, updateStudentCourseLoInteractionPageActive, updatePageActive, updatePageLoads, getStudents, updateLastAccess, updateStudentCourseLoInteractionPageLoads } from "$lib/services/utils/supabase";
 import { presenceService } from "./presence";
-import { PUBLIC_SUPABASE_URL } from "$env/static/public";
 
 let course: Course;
 let user: TokenResponse;
@@ -21,8 +20,6 @@ currentLo.subscribe((current) => {
 });
 
 export const analyticsService = {
-    loRoute: "",
-
     learningEvent(params: Record<string, string>, session: TokenResponse) {
         try {
             this.reportPageLoad(session);
@@ -56,12 +53,10 @@ export const analyticsService = {
 
     reportPageLoad(session: TokenResponse) {
         try {
+            supabaseService.storeStudentCourseLearningObjectInSupabase(course, lo, session?.user);
             presenceService.sendLoEvent(course, lo, get(onlineStatus), session?.user);
-            if (session) {
-                supabaseService.storeStudentCourseLearningObjectInSupabase(course, lo, get(onlineStatus), session?.user);
-                updateStudentLastAccess("course_id", course.courseId, "course");
-                updateStudentPageLoads("course_id", "course", course.courseId, 1);
-            }
+            updatePageLoads("course_id", "course", course.courseId, 1);
+            updateLastAccess("course_id", course.courseId, "course");
         } catch (error: any) {
             console.log(`TutorStore Error: ${error.message}`);
         }
@@ -69,10 +64,12 @@ export const analyticsService = {
 
     updatePageCount(session: TokenResponse) {
         try {
-            if (!lo) return;
             if (session?.user) {
                 updateStudentCourseLoInteractionPageActive(course.courseId, session?.user.user_metadata.user_name, lo.route, 1);
-                updateStudentLastAccess("id", session.user.user_metadata.user_name, "students",);
+                updatePageActive("id", "students", session.user.user_metadata.user_name, 1);
+                updateLastAccess("id", session.user.user_metadata.user_name, "students");
+                updatePageActive("course_id", "course", course.courseId, 1);
+                updateLastAccess("course_id", course.courseId, "course");
                 updateCalendar(course.calendar?.weeks, session.user.user_metadata.user_name);
             }
         } catch (error: any) {
@@ -82,8 +79,9 @@ export const analyticsService = {
 
     async updateLogin(courseId: string, session: any) {
         try {
-            const student = await getUsers(session.user.user_metadata.user_name);
+            const student = await getStudents(session.user.user_metadata.user_name);
             student ? supabaseUpdateStudent(session.user) : supabaseAddStudent(session.user);
+
         } catch (error: any) {
             console.log(`TutorStore Error: ${error.message}`);
         }
