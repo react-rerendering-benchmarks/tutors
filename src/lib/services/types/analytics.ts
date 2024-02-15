@@ -6,4 +6,5 @@ export interface analytics{
     updatePageCount(session: TokenResponse) : void;
     getOnlineStatus(course: Course, session: TokenResponse): Promise<string>;
     setOnlineStatus(status: boolean, session: TokenResponse): void;
+    
 }
