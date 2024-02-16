@@ -2,37 +2,37 @@ import type { Course, Lo } from "../models/lo-types";
 import { db } from "$lib/db/client";
 import { supabaseCourses, supabaseStudents } from "$lib/stores";
 import type { User } from "@supabase/supabase-js";
-import { formatDate } from "./firebase";
+import { formatDate } from "./metrics";
 
-export const getNumOfStudentCourseLoPageActive = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
+export const getNumOfStudentCourseLoDuration = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
     const { data, error } = await db
         .from('studentsinteraction')
-        .select('page_active')
+        .select('duration')
         .eq('student_id', studentId)
         .eq('course_id', courseId)
         .eq('lo_id', loId)
         .single();
 
-    const num = data?.page_active || 0;
+    const num = data?.duration || 0;
     const newCount = num + incrementBy;
     return newCount;
 };
 
-export const getNumOfStudentCourseLoPageLoads = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
+export const getNumOfStudentCourseLoCount = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
     const { data, error } = await db
         .from('studentsinteraction')
-        .select('page_loads')
+        .select('count')
         .eq('student_id', studentId)
         .eq('course_id', courseId)
         .eq('lo_id', loId)
         .single();
 
-    const num = data?.page_loads || 0;
+    const num = data?.count|| 0;
     const newCount = num + incrementBy;
     return newCount;
 };
 
-export async function supabaseUpdateStr(key: string, str: string) {
+export async function updateStudentsStatus(key: string, str: string) {
     await db
         .from('students')
         .update({
@@ -45,33 +45,33 @@ export async function readValue(key: string): Promise<any> {
     return data;
 };
 
-export async function getCalendarData(id: string): Promise<any> {
-    const { data, error } = await db.from('calendar').select().eq('id', formatDate(new Date())).eq('student_id', id);
+export async function getCalendarData(id: string, studentId: string): Promise<any> {
+    const { data, error } = await db.from('calendar').select().eq('id', formatDate(new Date())).eq('student_id', studentId);
     return data;
 };
 
-export async function updateCalendar(weeks: any, id: string) {
-    const returnedData = await getCalendarData(id)
+export async function insertOrUpdateCalendar(studentId: string) {
+    const returnedData = await getCalendarData(formatDate(new Date()), studentId)
     if (returnedData === undefined || returnedData.length === 0) {
         await db
             .from('calendar')
             .insert({
                 id: formatDate(new Date()),
-                student_id: id,
-                page_active: 1,
-                page_loads: 1,
+                student_id: studentId,
+                duration: 1,
+                count: 1,
             });
     } else {
-        const pageActivePromise = getActivePageTotal("student_id", "calendar", id, 1);
-        const pageLoadsPromise = getPageLoadsTotal("student_id", "calendar", id, 1);
-        const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
+        const durationPromise = getDurationTotal("id", "calendar", formatDate(new Date()), 1);
+        const countPromise = getCountTotal("id", "calendar", formatDate(new Date()), 1);
+        const [duration, count] = await Promise.all([durationPromise, countPromise]);
         await db
             .from('calendar')
             .update({
-                page_active: pageActive,
-                page_loads: pageLoads,
+                duration: duration,
+                count: count,
             })
-            .eq('student_id', id);
+            .eq('id', formatDate(new Date()));
     }
 };
 
@@ -92,10 +92,11 @@ export async function addCourse(course: Course) {
         .insert({
             course_id: course.courseId,
             title: course.title,
-            page_active: 1,
-            page_loads: 1,
+            duration: 1,
+            count: 1,
             date_last_accessed: new Date().toISOString(),
             img: course.img,
+            icon: course.icon
         });
 
     if (data) {
@@ -104,16 +105,15 @@ export async function addCourse(course: Course) {
 };
 
 export async function updateCourse(course: Course) {
-    const pageActivePromise = getActivePageTotal("course_id", "course", course.courseId, 1);
-    const pageLoadsPromise = getPageLoadsTotal("course_id", "course", course.courseId, 1);
-    const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
+    const durationPromise = getDurationTotal("course_id", "course", course.courseId, 1);
+    const countPromise = getCountTotal("course_id", "course", course.courseId, 1);
+    const [duration, count] = await Promise.all([durationPromise, countPromise]);
     await db
         .from('course')
         .update({
-            page_active: pageActive,
-            page_loads: pageLoads,
+            duration: duration,
+            count: count,
             date_last_accessed: new Date().toISOString(),
-            img: course.img,
         })
         .eq('course_id', course.courseId);
 };
@@ -121,7 +121,7 @@ export async function updateCourse(course: Course) {
 export async function getStudentCoursesLearningObjects(courseId: string, studentId: string, loId: string): Promise<any> {
     if (!courseId || !studentId || !loId) {
         console.error("Missing required parameters: courseId and studentId must be provided.");
-        return null; // Or you can return a custom error object
+        return null; 
     }
 
     const { data, error } = await db
@@ -148,16 +148,16 @@ export async function getStudents(studentId: string): Promise<any> {
 };
 
 export async function supabaseAddStudent(userDetails: User) {
-    const { data, error: insertError } = await db
+    const { data} = await db
         .from('students')
         .insert({
             id: userDetails.user_metadata.user_name,
             avatar: userDetails.user_metadata.avatar_url,
             full_name: userDetails.user_metadata.full_name,
             email: userDetails.user_metadata.email || "",
-            page_active: 1,
+            duration: 1,
             date_last_accessed: new Date().toISOString(),
-            page_loads: 1,
+            count: 1,
         });
 
     if (data) {
@@ -166,18 +166,18 @@ export async function supabaseAddStudent(userDetails: User) {
 };
 
 export async function supabaseUpdateStudent(userDetails: User) {
-    const pageActivePromise = getActivePageTotal("id", "students", userDetails.user_metadata.user_name, 1);
-    const pageLoadsPromise = getPageLoadsTotal("id", "students", userDetails.user_metadata.user_name, 1);
-    const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
+    const durationPromise = getDurationTotal("id", "students", userDetails.user_metadata.user_name, 1);
+    const countPromise = getCountTotal("id", "students", userDetails.user_metadata.user_name, 1);
+    const [duration, count] = await Promise.all([durationPromise, countPromise]);
     const { data, error } = await db
         .from('students')
         .update({
             avatar: userDetails.user_metadata.avatar_url,
             full_name: userDetails.user_metadata.full_name,
             email: userDetails.user_metadata.email || "",
-            page_active: pageActive,
+            duration: duration,
             date_last_accessed: new Date().toISOString(),
-            page_loads: pageLoads,
+            count: count,
         })
         .eq('id', userDetails.user_metadata.user_name);
 
@@ -191,22 +191,22 @@ export async function insertStudentCourseLoTable(courseId: string, studentId: st
             course_id: courseId,
             student_id: studentId,
             lo_id: loId,
-            page_active: 1,
+            duration: 1,
             date_last_accessed: new Date().toISOString(),
-            page_loads: 1
+            count: 1
         });
 };
 
 export async function updateStudentCourseLoTable(courseId: string, studentId: string, loId: string): Promise<any> {
-    const pageActivePromise = getNumOfStudentCourseLoPageActive(courseId, studentId, loId, 1);
-    const pageLoadsPromise = getNumOfStudentCourseLoPageLoads(courseId, studentId, loId, 1);
-    const [pageActive, pageLoads] = await Promise.all([pageActivePromise, pageLoadsPromise]);
+    const durationPromise = getNumOfStudentCourseLoDuration(courseId, studentId, loId, 1);
+    const countPromise = getNumOfStudentCourseLoCount(courseId, studentId, loId, 1);
+    const [duration, count] = await Promise.all([durationPromise, countPromise]);
     await db
         .from('studentsinteraction')
         .update({
-            page_active: pageActive,
+            duration: duration,
             date_last_accessed: new Date().toISOString(),
-            page_loads: pageLoads,
+            count: count,
         })
         .eq('student_id', studentId)
         .eq('course_id', courseId)
@@ -233,7 +233,8 @@ export async function addLo(currentLo: Lo) {
             name: currentLo.title,
             date_last_accessed: new Date().toISOString(),
             parent: currentLo.parentLo ? currentLo.parentLo.route : null,
-            lo_img: currentLo.img
+            lo_img: currentLo.img,
+            icon: currentLo.icon
         });
 };
 
@@ -246,95 +247,94 @@ export async function updateLo(currentLo: Lo) {
         .eq('id', currentLo.route);
 };
 
-export const updateStudentCourseLoInteractionPageActive = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
-    const numOfPageActive = await getNumOfStudentCourseLoPageActive(courseId, studentId, loId, incrementBy);
-    const num = numOfPageActive?.page_active || 0;
+export const updateStudentCourseLoInteractionDuration = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
+    const numOfDuration = await getNumOfStudentCourseLoDuration(courseId, studentId, loId, incrementBy);
+    const num = numOfDuration || 0;
     const newCount = num + incrementBy;
 
     await db
         .from('studentsinteraction')
-        .update({ 'page_active': newCount })
+        .update({ 'duration': newCount })
         .eq('student_id', studentId)
         .eq('course_id', courseId)
         .eq('lo_id', loId);
 };
 
-export const updateStudentCourseLoInteractionPageLoads = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
-    const numOfPageLoads = await getNumOfStudentCourseLoPageLoads(courseId, studentId, loId, incrementBy);
-
-    let num = numOfPageLoads?.page_loads || 0;
+export const updateStudentCourseLoInteractionCount = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
+    const numOfCount = await getNumOfStudentCourseLoCount(courseId, studentId, loId, incrementBy);
+    let num = numOfCount?.count || 0;
     const newCount = num + incrementBy;
 
     await db
         .from('studentsinteraction')
-        .update({ 'page_loads': newCount })
+        .update({ 'count': newCount })
         .eq('student_id', studentId)
         .eq('course_id', courseId)
         .eq('lo_id', loId);
 };
 
-export const getActivePageTotal = async (key: string, table: string, id: string, incrementBy: number) => {
+export const getDurationTotal = async (key: string, table: string, id: string, incrementBy: number) => {
     const { data, error } = await db
         .from(table)
-        .select('page_active')
+        .select('duration')
         .eq(key, id)
         .single();
 
     if (data === null || data === undefined) {
-        console.log(`No data found for ${table} with ${key} ${id}`);
+        console.warn(`No data found for ${table} with ${key} ${id}`);
         return null;
     }
 
-    const num = data?.page_active || 0;
+    const num = data?.duration || 0;
     const newCount = num + incrementBy;
     return newCount;
 };
 
-export const getPageLoadsTotal = async (key: string, table: string, id: string, incrementBy: number) => {
+export const getCountTotal = async (key: string, table: string, id: string, incrementBy: number) => {
     const { data, error } = await db
         .from(table)
-        .select('page_loads')
+        .select('count')
         .eq(key, id)
         .single();
 
     if (data === null || data === undefined) {
-        console.log(`No data found for ${table} with ${key} ${id}`);
-        return null; // or handle the absence of data accordingly
+        console.warn(`No data found for ${table} with ${key} ${id}`);
+        return null;
     }
 
-    const num = data?.page_loads || 0;
+    const num = data?.count || 0;
     const newCount = num + incrementBy;
     return newCount;
 };
 
-export const updatePageLoads = async (key: string, table: string, id: string, incrementBy: number) => {
+export const updateCount= async (key: string, table: string, id: string, incrementBy: number) => {
     const { data, error } = await db
         .from(table)
-        .select('page_loads')
+        .select('count')
         .eq(key, id)
         .single();
 
-    const num = data?.page_loads || 0;
+    const num = data?.count || 0;
     const newCount = num + incrementBy;
 
     await db
         .from(table)
-        .update({ 'page_loads': newCount })
+        .update({ 'count': newCount })
         .eq(key, id);
 };
 
-export const updatePageActive = async (key: string, table: string, id: string, incrementBy: number) => {
+export const updateDuration = async (key: string, table: string, id: string, incrementBy: number) => {
     const { data, error } = await db
         .from(table)
-        .select('page_active')
+        .select('duration')
         .eq(key, id)
         .single();
 
-    const num = data?.page_active || 0;
+    const num = data?.duration|| 0;
     const newCount = num + incrementBy;
     await db
         .from(table)
-        .update({ 'page_active': newCount })
+        .update({ 'duration': newCount })
         .eq(key, id);
 };
 
@@ -364,6 +364,7 @@ export async function storeStudentCourseLearningObjectInSupabase(course: Course,
     await insertOrUpdateStudent(userDetails);
     await insertOrUpdateLoEvent(lo);
     await handleInteractionData(course, lo, userDetails);
+    await insertOrUpdateCalendar(userDetails.user_metadata.user_name);
 };
 
 export async function handleInteractionData(course: Course, lo: Lo, userDetails: User) {
@@ -377,14 +378,10 @@ export async function handleInteractionData(course: Course, lo: Lo, userDetails:
 };
 
 export async function insertOrUpdateCourse(course: any) {
-    try {
         const returnedCourses = await getCourses(course.courseId);
         if (returnedCourses === null || returnedCourses.length === 0) {
             await addCourse(course);
         } else {
             await updateCourse(course);
         }
-    } catch (error) {
-        console.error("insertOrUpdateCourse error: ", error);
-    }
 };
