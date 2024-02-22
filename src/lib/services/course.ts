@@ -98,5 +98,16 @@ export const courseService = {
     const lo = course.loIndex.get(loId);
     if (lo) currentLo.set(lo);
     return lo!;
-  }
+  },
+
+  async sbReadCourse(courseId: string, fetchFunction: typeof fetch): Promise<Course> {
+    const course = await this.getOrLoadCourse(courseId, fetchFunction);
+    currentCourse.set(course);
+    currentLo.set(course);
+    courseUrl.set(course.courseUrl);
+    if (PUBLIC_party_kit_main_room !== "XXX") {
+      presenceService.startPresenceService(course);
+    }
+    return course;
+  },
 };

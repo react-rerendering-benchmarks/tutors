@@ -1,6 +1,7 @@
 import { child, get, getDatabase, ref } from "firebase/database";
 import type { DayMeasure, Metric, UserMetric } from "$lib/services/types/metrics";
 import type { Lo } from "$lib/services/models/lo-types";
+import { db } from "$lib/db/client";
 
 function populateCalendar(user: UserMetric) {
   user.calendarActivity = [];
@@ -162,4 +163,114 @@ export function formatDate(date: Date): string {
   if (month.length < 2) month = "0" + month;
   if (day.length < 2) day = "0" + day;
   return [year, month, day].join("-");
+}
+
+/*****Supabase ********/
+export async function fetchStudentById(courseUrl: string, session: any, allLabs) {
+  let user = null;
+  try {
+    const courseBase = courseUrl.substr(0, courseUrl.indexOf("."));
+    const { data, error } = await db.rpc('fetch_student_by_id', {
+      user_name: session.user.user_metadata.user_name,
+      course_base: courseBase
+    });
+
+    user = data;
+    await updateStudentMetrics(courseBase, user);
+    populateStudentCalendar(user);
+    if (allLabs) {
+      populateStudentsLabUsage(user, allLabs);
+    }
+    updateUserObject(user, data);
+    return user;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+};
+
+async function updateStudentMetrics(courseBase: string, user: any) {
+  const { data: metrics, error: metricsError } = await db.rpc('get_metrics', {
+    user_name: user[0].nickname,
+    course_base: courseBase
+  });
+
+  if (metricsError) {
+    throw metricsError;
+  }
+
+  user.metric = {
+    id: "",
+    metrics: []
+  };
+
+  user.metric.id = 'calendar';
+
+  metrics.forEach((m) => {
+    const metricObject: { [key: string]: number } = {};
+    metricObject[m.calendar_id] = m.total_duration;
+    user.metric.metrics.push(metricObject);
+  });
+}
+
+function updateUserObject(user: UserMetric, data: any) {
+  user.name = data[0].name;
+  user.email = data[0].email;
+  user.picture = data[0].picture;
+  user.title = data[0].title;
+  user.onlinestatus = data[0].onlinestatus;
+  user.nickname = data[0].nickname;
+}
+
+function populateStudentCalendar(user: UserMetric) {
+  user.calendarActivity = [];
+  if (user) {
+    user.forEach(item => {
+      const calendarId = item.calendar_id;
+      console.log(calendarId);
+      const dayMeasure: DayMeasure = {
+        date: calendarId,
+        dateObj: Date.parse(calendarId),
+        metric: item.total_duration
+      };
+      user.calendarActivity.push(dayMeasure);
+    });
+  }
+}
+
+function populateStudentsLabUsage(user: UserMetric, allLabs: Lo[]) {
+  user.labActivity = [];
+  for (const lab of allLabs) {
+    const labActivity = findInStudent(lab.title, user);
+    user.labActivity.push(labActivity);
+  }
+}
+
+function findInStudent(title: string, user: UserMetric) {
+  return findInStudentMetrics(title, user.calendarActivity);
+}
+
+function findInStudentMetric(title: string, metric: any) {
+  if (title === metric.title) {
+    return metric;
+  } else if (metric.length > 0) {
+    return findInStudentMetrics(title, metric);
+  } else {
+    return null;
+  }
+}
+
+function findInStudentMetrics(title: string, calendar: any): Metric {
+  let result: any = null;
+  for (const metric of calendar) {
+    if (metric.id === "ab" || metric.id === "alk" || metric.id === "ideo") {
+      // console.log("ignoring spurious data"); as result of bug in types
+      // since fixed, but bad data in some user dbs.
+    } else {
+      result = findInStudentMetric(title, metric);
+      if (result != null) {
+        return result;
+      }
+    }
+  }
+  return result;
 }

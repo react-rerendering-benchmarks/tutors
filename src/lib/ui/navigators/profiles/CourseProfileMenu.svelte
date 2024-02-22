@@ -59,7 +59,7 @@
         </li>
       {/if}
       <li>
-        <a href="/time/{currentCourseUrl}" rel="noreferrer">
+        <a href="/new-time/{currentCourseUrl}" rel="noreferrer">
           <Icon icon="fluent:clock-alarm-24-filled" color="rgba(var(--color-primary-500))" height="20" />
           <div class="ml-2">Tutors Time</div>
         </a>

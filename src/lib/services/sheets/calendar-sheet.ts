@@ -2,7 +2,7 @@ import type { ICellRendererParams } from "ag-grid-community";
 import type { Calendar } from "$lib/services/models/lo-types";
 import type { UserMetric } from "$lib/services/types/metrics";
 import { deepScheme } from "./heat-map-colours";
-import { formatDate } from "$lib/services/utils/firebase";
+import { formatDate } from "$lib/services/utils/metrics";
 
 interface CalendarSheetColumn {
   headerName: string;
@@ -76,9 +76,9 @@ export class CalendarSheet {
 
   createUserIdRow(user: UserMetric) {
     const row = {
-      user: user.name,
+      user: user.name, 
       github: user.nickname
-    };
+          };
     return row;
   }
 

@@ -5,8 +5,8 @@ export interface SupabaseStudent {
     nickName: string;
     avtar: string;
     title: string;
-    pageActive: number;
-    pageLoads: number;
+    duration: number;
+    count: number;
     dateLastAccessed: Date;
   }
   
@@ -14,15 +14,15 @@ export interface SupabaseStudent {
     id: string;
     learningObjectType: string;
     name: string;
-    pageActive: number;
-    pageLoads: number;
+    duration: number;
+    count: number;
     dateLastAccessed: Date;
   }
 
   export interface SupabaseCourse {
     courseId: string;
-    pageActive: number;
-    pageLoads: number;
+    duration: number;
+    count: number;
     dateLastAccessed: Date;
   }
 

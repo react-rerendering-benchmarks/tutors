@@ -18,11 +18,28 @@ export interface DayMeasure {
   metric: number;
 }
 
+// export interface UserMetric extends Token {
+//   title: string;
+//   count: number;
+//   last: string;
+//   duration: number;
+//   calendar_id: Date;
+//   metrics: Metric[];
+//   labActivity: Metric[];
+//   calendarActivity: DayMeasure[];
+// }
+
 export interface UserMetric extends Token {
   title: string;
   count: number;
   last: string;
+  name: string;
+  email: string;
+  picture: string;
+  onlinestatus: boolean;
+  nickname: string;
   duration: number;
+  calendar_id: Date;
   metrics: Metric[];
   labActivity: Metric[];
   calendarActivity: DayMeasure[];
