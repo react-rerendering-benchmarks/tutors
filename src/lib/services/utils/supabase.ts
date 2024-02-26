@@ -226,7 +226,7 @@ export const updateLastAccess = async (key: string, id: string, table: any): Pro
 
 export async function addLo(currentLo: Lo) {
     const { error } = await db
-        .from('learning-object')
+        .from('learningobject')
         .insert({
             id: currentLo.route,
             type: currentLo.type,
@@ -240,7 +240,7 @@ export async function addLo(currentLo: Lo) {
 
 export async function updateLo(currentLo: Lo) {
     await db
-        .from('learning-object')
+        .from('learningobject')
         .update({
             date_last_accessed: new Date().toISOString(),
         })
@@ -339,7 +339,7 @@ export const updateDuration = async (key: string, table: string, id: string, inc
 };
 
 export async function insertOrUpdateLoEvent(currentLo: Lo) {
-    const { data, error } = await db.from('learning-object').select().eq('id', currentLo.route);
+    const { data, error } = await db.from('learningobject').select().eq('id', currentLo.route);
     if (data === null || data.length === 0) {
         await addLo(currentLo);
     } else {

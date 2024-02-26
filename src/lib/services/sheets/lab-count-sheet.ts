@@ -20,6 +20,26 @@ export class LabCountSheet extends LabSheet {
     });
   }
 
+  // populateRow(user: UserMetric, los: Lo[]) {
+  //   const row = this.creatRow(user);
+  //   this.zeroEntries(los, row);
+  //   let summaryCount = 0;
+  //   user.labActivity.forEach((labMetric) => {
+  //     let labSummaryCount = 0;
+  //     if (labMetric) {
+  //       labMetric.forEach((stepMetric) => {
+  //         if (stepMetric.count) labSummaryCount = labSummaryCount + stepMetric.count;
+  //       });
+  //       labSummaryCount = Math.round(labSummaryCount / 2);
+  //       row[`${labMetric.title}`] = labSummaryCount;
+  //     }
+  //     summaryCount = summaryCount + labSummaryCount;
+  //   });
+
+  //   row.summary = summaryCount;
+  //   this.rowData.push(row);
+  // }
+
   populateRow(user: UserMetric, los: Lo[]) {
     const row = this.creatRow(user);
     this.zeroEntries(los, row);
@@ -27,9 +47,7 @@ export class LabCountSheet extends LabSheet {
     user.labActivity.forEach((labMetric) => {
       let labSummaryCount = 0;
       if (labMetric) {
-        labMetric.metrics.forEach((stepMetric) => {
-          if (stepMetric.count) labSummaryCount = labSummaryCount + stepMetric.count;
-        });
+          if (labMetric.count) labSummaryCount = labSummaryCount + labMetric.count;
         labSummaryCount = Math.round(labSummaryCount / 2);
         row[`${labMetric.title}`] = labSummaryCount;
       }
@@ -39,4 +57,4 @@ export class LabCountSheet extends LabSheet {
     row.summary = summaryCount;
     this.rowData.push(row);
   }
-}
+ }

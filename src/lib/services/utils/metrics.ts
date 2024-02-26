@@ -170,26 +170,26 @@ export async function fetchStudentById(courseUrl: string, session: any, allLabs)
   let user = null;
   try {
     const courseBase = courseUrl.substr(0, courseUrl.indexOf("."));
-    const { data, error } = await db.rpc('fetch_student_by_id', {
+    const { data: student, error: studentError } = await db.rpc('fetch_course_overview_for_student', {
       user_name: session.user.user_metadata.user_name,
       course_base: courseBase
     });
 
-    user = data;
+    user = student;
     await updateStudentMetrics(courseBase, user);
     populateStudentCalendar(user);
     if (allLabs) {
-      populateStudentsLabUsage(user, allLabs);
+      populateStudentsLabUsage(courseBase, user, allLabs);
     }
-    updateUserObject(user, data);
-    return user;
+    updateUserObject(user, student);
   } catch (error) {
     console.error('Error fetching data:', error);
   }
+  return user;
 };
 
 async function updateStudentMetrics(courseBase: string, user: any) {
-  const { data: metrics, error: metricsError } = await db.rpc('get_metrics', {
+  const { data: metrics, error: metricsError } = await db.rpc('get_lab_usage', {
     user_name: user[0].nickname,
     course_base: courseBase
   });
@@ -199,15 +199,16 @@ async function updateStudentMetrics(courseBase: string, user: any) {
   }
 
   user.metric = {
-    id: "",
+    id: 'calendar',
     metrics: []
   };
-
-  user.metric.id = 'calendar';
 
   metrics.forEach((m) => {
     const metricObject: { [key: string]: number } = {};
     metricObject[m.calendar_id] = m.total_duration;
+    metricObject['title'] = m.lo_title;
+    metricObject['count'] = m.total_duration;
+
     user.metric.metrics.push(metricObject);
   });
 }
@@ -221,23 +222,22 @@ function updateUserObject(user: UserMetric, data: any) {
   user.nickname = data[0].nickname;
 }
 
-function populateStudentCalendar(user: UserMetric) {
+function populateStudentCalendar(user: any) {
   user.calendarActivity = [];
   if (user) {
     user.forEach(item => {
       const calendarId = item.calendar_id;
-      console.log(calendarId);
       const dayMeasure: DayMeasure = {
         date: calendarId,
         dateObj: Date.parse(calendarId),
-        metric: item.total_duration
+        metric: item.total_duration,
       };
       user.calendarActivity.push(dayMeasure);
     });
   }
 }
 
-function populateStudentsLabUsage(user: UserMetric, allLabs: Lo[]) {
+async function populateStudentsLabUsage(courseBase: string, user: UserMetric, allLabs: Lo[]) {
   user.labActivity = [];
   for (const lab of allLabs) {
     const labActivity = findInStudent(lab.title, user);
@@ -245,8 +245,8 @@ function populateStudentsLabUsage(user: UserMetric, allLabs: Lo[]) {
   }
 }
 
-function findInStudent(title: string, user: UserMetric) {
-  return findInStudentMetrics(title, user.calendarActivity);
+function findInStudent(title: string, user: any) {
+  return findInStudentMetrics(title, user.metric.metrics);
 }
 
 function findInStudentMetric(title: string, metric: any) {
