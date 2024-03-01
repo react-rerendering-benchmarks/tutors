@@ -134,8 +134,6 @@ export async function deleteCourseFromList(url: string) {
   }
 }
 
-
-
 export async function initFirebase(keys: any) {
   if (keys.apiKey !== "XXX") {
     try {

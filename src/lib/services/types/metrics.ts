@@ -40,9 +40,13 @@ export interface UserMetric extends Token {
   nickname: string;
   duration: number;
   calendar_id: Date;
+  routes: { [key: string]: string[] };
+  allRoutes: string[];
+  metric: Metric;
   metrics: Metric[];
   labActivity: Metric[];
   calendarActivity: DayMeasure[];
+  topicActivity: Metric[];
 }
 
 export interface StudentMetric {
@@ -65,6 +69,24 @@ export interface StudentLoEvent {
   loRoute: string;
   loIcon?: IconType;
   timeout: number;
+}
+
+export interface TopicData {
+  calendar_id: string;
+  title: string;
+  total_duration: number;
+  metrics: Metric[];
+}
+
+// Function to aggregate durations for parent topics and their children
+export interface AggregatedTopicData {
+  total_duration: number;
+  title: string;
+  calendar_id: string;
+}
+
+export interface TopicPaths {
+  [parentTopic: string]: string[];
 }
 
 export type StudentLoUpdate = (kind: string, event: StudentLoEvent) => void;

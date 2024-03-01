@@ -1,7 +1,8 @@
 import { child, get, getDatabase, ref } from "firebase/database";
-import type { DayMeasure, Metric, UserMetric } from "$lib/services/types/metrics";
+import type { DayMeasure, Metric, UserMetric, TopicPaths, TopicData, AggregatedTopicData } from "$lib/services/types/metrics";
 import type { Lo } from "$lib/services/models/lo-types";
 import { db } from "$lib/db/client";
+import type { User } from "@supabase/supabase-js";
 
 function populateCalendar(user: UserMetric) {
   user.calendarActivity = [];
@@ -166,7 +167,7 @@ export function formatDate(date: Date): string {
 }
 
 /*****Supabase ********/
-export async function fetchStudentById(courseUrl: string, session: any, allLabs) {
+export async function fetchStudentById(courseUrl: string, session: any, allLabs, allTopics) {
   let user = null;
   try {
     const courseBase = courseUrl.substr(0, courseUrl.indexOf("."));
@@ -181,12 +182,46 @@ export async function fetchStudentById(courseUrl: string, session: any, allLabs)
     if (allLabs) {
       populateStudentsLabUsage(courseBase, user, allLabs);
     }
+
+    if (allTopics) {
+      await updateRoutes(allTopics, user);
+      await prepareTopicDataForStudent(courseBase, user);
+    }
+    populateStudentsTopicUsage(user, allTopics);
     updateUserObject(user, student);
   } catch (error) {
     console.error('Error fetching data:', error);
   }
   return user;
 };
+
+function aggregateDurations(data: TopicData[], paths: TopicPaths): { [parentTopic: string]: AggregatedTopicData } {
+  const aggregatedDurations: { [parentTopic: string]: AggregatedTopicData } = {};
+
+  for (const parentTopic in paths) {
+    if (paths.hasOwnProperty(parentTopic)) {
+      const children = paths[parentTopic];
+
+      aggregatedDurations[parentTopic] = {
+        total_duration: 0,
+        title: '',
+        calendar_id: ''
+      };
+
+      // Add durations of children to the parent topic
+      for (const child of children) {
+        const topicData = data.find(item => item.title === child);
+        if (topicData) {
+          aggregatedDurations[parentTopic].total_duration += topicData.total_duration;
+          aggregatedDurations[parentTopic].title = topicData.title;
+          aggregatedDurations[parentTopic].calendar_id = topicData.calendar_id;
+        }
+      }
+    }
+  }
+
+  return aggregatedDurations;
+}
 
 async function updateStudentMetrics(courseBase: string, user: any) {
   const { data: metrics, error: metricsError } = await db.rpc('get_lab_usage', {
@@ -274,3 +309,87 @@ function findInStudentMetrics(title: string, calendar: any): Metric {
   }
   return result;
 }
+
+async function populateStudentsTopicUsage(user: UserMetric, allTopics: Lo[]) {
+  user.topicActivity = [];
+  for (const topic of allTopics) {
+    const topicActivity = findInStudent(topic.route, user);
+    topicActivity.title = topic.title;
+    user.topicActivity.push(topicActivity);
+  }
+}
+
+// Function to remove trailing '/' from a string
+function removeTrailingSlash(str: string): string {
+  return str.replace(/\/$/, '');
+};
+
+// Function to handle adding routes to the routes object
+function addRoute(user: UserMetric, parentTopic: string, childTopic: string) {
+  parentTopic = removeTrailingSlash(parentTopic);
+  childTopic = removeTrailingSlash(childTopic);
+  if (!user.routes[parentTopic]) {
+    user.routes[parentTopic] = [];
+  }
+
+  if (!user.routes[parentTopic].includes(childTopic)) {
+    user.routes[parentTopic].push(childTopic);
+  }
+};
+
+async function updateRoutes(allTopics: any, user: UserMetric) {
+  user.routes = {}; 
+  user.allRoutes = []; 
+  allTopics.forEach((m) => {
+    if (!user.allRoutes?.includes(m.route)) {
+      user.allRoutes.push(m.route);
+    }
+
+    m.los.forEach((t) => {
+      if (!user.allRoutes?.includes(t.route)) {
+        user.allRoutes.push(t.route);
+      }
+      addRoute(user, m.route, t.route);
+
+      t?.los?.forEach((p) => {
+        if (!user.allRoutes?.includes(p.route)) {
+          user.allRoutes.push(p.route);
+        }
+        addRoute(user, t.route, p.route);
+      });
+    });
+  });
+};
+
+function logAggregatedDurationsForTopic(aggregatedDurations: any, user: any) {
+  for (const parentTopic in aggregatedDurations) {
+    if (aggregatedDurations.hasOwnProperty(parentTopic)) {
+      const metricObject: { [key: string]: number | string } = {};
+
+      metricObject[aggregatedDurations[parentTopic].calendar_id] = aggregatedDurations[parentTopic].total_duration;
+      metricObject['title'] = parentTopic;
+      metricObject['count'] = aggregatedDurations[parentTopic].total_duration;
+
+      user.metric.metrics.push(metricObject);
+    }
+  }
+};
+
+async function prepareTopicDataForStudent(courseBase: string, user: UserMetric) {
+  const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
+    user_name: user[0].nickname,
+    course_base: courseBase,
+    routes: user.allRoutes,
+  });
+
+  if (topicsError) {
+    throw topicsError;
+  }
+
+  const topicPaths: TopicPaths = user.routes;
+  const data: TopicData[] = topics;
+
+  const aggregatedDurations = aggregateDurations(data, topicPaths);
+  logAggregatedDurationsForTopic(aggregatedDurations, user);
+}
+

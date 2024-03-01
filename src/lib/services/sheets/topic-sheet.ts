@@ -2,7 +2,7 @@ import type { Grid, ICellRendererParams } from "ag-grid-community";
 import type { Lo, Topic } from "$lib/services/models/lo-types";
 import type { UserMetric } from "$lib/services/types/metrics";
 
-interface LabSheetColumn {
+interface TopicSheetColumn {
   headerName: string;
   field: string;
   width: number;
@@ -26,11 +26,11 @@ export const options = {
   }
 };
 
-export class LabSheet {
+export class TopicSheet {
   title = "";
   subtitle = "";
 
-  columnDefs: LabSheetColumn[] = [
+  columnDefs: TopicSheetColumn[] = [
     { headerName: "Name", field: "user", width: 180, suppressSizeToFit: true, pinned: "left" },
     {
       headerName: "Github ID",
