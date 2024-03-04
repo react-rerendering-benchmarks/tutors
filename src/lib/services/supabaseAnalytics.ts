@@ -23,7 +23,7 @@ currentLo.subscribe((current) => {
 export const analyticsService = {
     learningEvent(params: Record<string, string>, session: TokenResponse) {
         try {
-            this.reportPageLoad(session);
+            this.reportPageLoad(params, session);
         } catch (error: any) {
             console.log(`TutorStore Error: ${error.message}`);
         }
@@ -51,9 +51,9 @@ export const analyticsService = {
         }
     },
 
-    reportPageLoad(session: TokenResponse) {
+    reportPageLoad(params: Record<string, string>, session: TokenResponse) {
         try {
-            storeStudentCourseLearningObjectInSupabase(course, lo, session?.user);
+            storeStudentCourseLearningObjectInSupabase(course, params.loid, lo, session?.user);
             presenceService.sendLoEvent(course, lo, get(onlineStatus), session?.user);
         } catch (error: any) {
             console.log(`TutorStore Error: ${error.message}`);

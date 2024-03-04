@@ -224,11 +224,11 @@ export const updateLastAccess = async (key: string, id: string, table: any): Pro
     }
 };
 
-export async function addLo(currentLo: Lo) {
+export async function addLo(loid: string, currentLo: Lo) {
     const { error } = await db
         .from('learningobject')
         .insert({
-            id: currentLo.route,
+            id: loid,
             type: currentLo.type,
             name: currentLo.title,
             date_last_accessed: new Date().toISOString(),
@@ -238,13 +238,13 @@ export async function addLo(currentLo: Lo) {
         });
 };
 
-export async function updateLo(currentLo: Lo) {
+export async function updateLo(loid: string, currentLo: Lo) {
     await db
         .from('learningobject')
         .update({
             date_last_accessed: new Date().toISOString(),
         })
-        .eq('id', currentLo.route);
+        .eq('id', loid);
 };
 
 export const updateStudentCourseLoInteractionDuration = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
@@ -338,12 +338,12 @@ export const updateDuration = async (key: string, table: string, id: string, inc
         .eq(key, id);
 };
 
-export async function insertOrUpdateLoEvent(currentLo: Lo) {
-    const { data, error } = await db.from('learningobject').select().eq('id', currentLo.route);
+export async function insertOrUpdateLoEvent(loid: string, currentLo: Lo) {
+    const { data, error } = await db.from('learningobject').select().eq('id', loid);
     if (data === null || data.length === 0) {
-        await addLo(currentLo);
+        await addLo(loid, currentLo);
     } else {
-        await updateLo(currentLo);
+        await updateLo(loid, currentLo);
     }
 };
 
@@ -358,22 +358,22 @@ export async function insertOrUpdateStudent(userDetails: User) {
     }
 };
 
-export async function storeStudentCourseLearningObjectInSupabase(course: Course, lo: Lo, userDetails: User) {
+export async function storeStudentCourseLearningObjectInSupabase(course: Course, loid:string, lo: Lo, userDetails: User) {
     if (userDetails?.user_metadata.full_name === "Anon") return;
     await insertOrUpdateCourse(course);
     await insertOrUpdateStudent(userDetails);
-    await insertOrUpdateLoEvent(lo);
-    await handleInteractionData(course, lo, userDetails);
+    await insertOrUpdateLoEvent(loid, lo);
+    await handleInteractionData(course,loid, lo, userDetails);
     await insertOrUpdateCalendar(userDetails.user_metadata.user_name);
 };
 
-export async function handleInteractionData(course: Course, lo: Lo, userDetails: User) {
-    const getInteractionData = await getStudentCoursesLearningObjects(course.courseId, userDetails.user_metadata.user_name, lo.route);
+export async function handleInteractionData(course: Course,loid: string, lo: Lo, userDetails: User) {
+    const getInteractionData = await getStudentCoursesLearningObjects(course.courseId, userDetails.user_metadata.user_name, loid);
 
     if (getInteractionData === null || getInteractionData.length === 0) {
-        await insertStudentCourseLoTable(course.courseId, userDetails.user_metadata.user_name, lo.route);
+        await insertStudentCourseLoTable(course.courseId, userDetails.user_metadata.user_name, loid);
     } else {
-        await updateStudentCourseLoTable(course.courseId, userDetails.user_metadata.user_name, lo.route);
+        await updateStudentCourseLoTable(course.courseId, userDetails.user_metadata.user_name, loid);
     }
 };
 
