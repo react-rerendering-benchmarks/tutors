@@ -44,6 +44,7 @@ export interface UserMetric extends Token {
   allRoutes: string[];
   metric: Metric;
   metrics: Metric[];
+  topics:TopicData[];
   labActivity: Metric[];
   calendarActivity: DayMeasure[];
   topicActivity: Metric[];
@@ -74,11 +75,11 @@ export interface StudentLoEvent {
 export interface TopicData {
   calendar_id: string;
   title: string;
+  lo_title: string;
   total_duration: number;
   metrics: Metric[];
 }
 
-// Function to aggregate durations for parent topics and their children
 export interface AggregatedTopicData {
   total_duration: number;
   title: string;

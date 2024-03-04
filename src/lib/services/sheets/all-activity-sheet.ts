@@ -2,7 +2,7 @@ import type { Grid, ICellRendererParams } from "ag-grid-community";
 import type { Lo, Topic } from "$lib/services/models/lo-types";
 import type { UserMetric } from "$lib/services/types/metrics";
 
-interface LabSheetColumn {
+interface AllActivitySheetColumn {
   headerName: string;
   field: string;
   width: number;
@@ -26,11 +26,11 @@ export const options = {
   }
 };
 
-export class LabSheet {
+export class TopicSheet {
   title = "";
   subtitle = "";
 
-  columnDefs: LabSheetColumn[] = [
+  columnDefs: AllActivitySheetColumn[] = [
     { headerName: "Name", field: "user", width: 180, suppressSizeToFit: true, pinned: "left" },
     {
       headerName: "Github ID",
@@ -125,7 +125,7 @@ export class LabSheet {
     });
   }
 
-  zeroEntriesComplete(los: any, row) {
+  zeroEntriesComplete(los: Lo[], row) {
     los.forEach((lab) => {
       lab.los.forEach((step) => {
         row[`${lab.title + step.shortTitle}`] = 0;

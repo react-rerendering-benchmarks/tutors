@@ -20,6 +20,7 @@ export class TopicCountSheet extends LabSheet {
     });
   }
 
+
   // populateRow(user: UserMetric, los: Lo[]) {
   //   const row = this.creatRow(user);
   //   this.zeroEntries(los, row);
@@ -44,7 +45,7 @@ export class TopicCountSheet extends LabSheet {
     const row = this.creatRow(user);
     this.zeroEntries(topics, row);
     let summaryCount = 0;
-    user.topicActivity.forEach((topicMetric, index: number) => {
+    user.topicActivity.forEach((topicMetric) => {
       let labSummaryCount = 0;
       if (topicMetric) {
           if (topicMetric.count) labSummaryCount = labSummaryCount + topicMetric.count;
@@ -57,4 +58,41 @@ export class TopicCountSheet extends LabSheet {
     row.summary = summaryCount;
     this.rowData.push(row);
   }
- }
+
+  //  populateRow(user: UserMetric, topics: Lo[]) {
+  //   const row = this.creatRow(user);
+  //   this.zeroEntries(topics, row);
+  //   let summaryCount = 0;
+  //   user.topics.forEach((topicMetric) => {
+  //     let labSummaryCount = 0;
+  //     if (topicMetric) {
+  //         if (topicMetric.total_duration) labSummaryCount = labSummaryCount + topicMetric.total_duration;
+  //       labSummaryCount = Math.round(labSummaryCount / 2);
+  //       row[`${topicMetric.lo_title}`] = labSummaryCount;
+  //     }
+  //     summaryCount = summaryCount + labSummaryCount;
+  //   });
+
+  //   row.summary = summaryCount;
+  //   this.rowData.push(row);
+  // }
+ 
+
+//  populateRows(user: UserMetric, topics: Lo[]) {
+//   const row = this.creatRow(user);
+//   this.zeroEntriesComplete(user.routes, row);
+//   let summaryCount = 0;
+//   user.metric.metrics.forEach((topicMetric) => {
+//     let labSummaryCount = 0;
+//     if (topicMetric) {
+//         if (topicMetric.count) labSummaryCount = labSummaryCount + topicMetric.count;
+//       labSummaryCount = Math.round(labSummaryCount / 2);
+//       row[`${topicMetric.title}`] = labSummaryCount;
+//     }
+//     summaryCount = summaryCount + labSummaryCount;
+//   });
+
+//   row.summary = summaryCount;
+//   this.rowData.push(row);
+// }
+}

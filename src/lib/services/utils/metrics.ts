@@ -180,7 +180,7 @@ export async function fetchStudentById(courseUrl: string, session: any, allLabs,
     await updateStudentMetrics(courseBase, user);
     populateStudentCalendar(user);
     if (allLabs) {
-      populateStudentsLabUsage(courseBase, user, allLabs);
+      populateStudentsLabUsage(user, allLabs);
     }
 
     if (allTopics) {
@@ -272,7 +272,7 @@ function populateStudentCalendar(user: any) {
   }
 }
 
-async function populateStudentsLabUsage(courseBase: string, user: UserMetric, allLabs: Lo[]) {
+async function populateStudentsLabUsage(user: UserMetric, allLabs: Lo[]) {
   user.labActivity = [];
   for (const lab of allLabs) {
     const labActivity = findInStudent(lab.title, user);
@@ -379,17 +379,18 @@ async function prepareTopicDataForStudent(courseBase: string, user: UserMetric) 
   const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
     user_name: user[0].nickname,
     course_base: courseBase,
-    routes: user.allRoutes,
+    routes: user.allRoutes, //maybe remove this
   });
+
+  user.topics = topics;
 
   if (topicsError) {
     throw topicsError;
   }
 
   const topicPaths: TopicPaths = user.routes;
-  const data: TopicData[] = topics;
 
-  const aggregatedDurations = aggregateDurations(data, topicPaths);
+  const aggregatedDurations = aggregateDurations(user.topics, topicPaths);
   logAggregatedDurationsForTopic(aggregatedDurations, user);
 }
 

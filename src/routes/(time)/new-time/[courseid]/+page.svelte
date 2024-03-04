@@ -8,6 +8,7 @@
   import InstructorLabTime from "$lib/ui/time/InstructorLabTime.svelte";
   import InstructorCalendarTime from "$lib/ui/time/InstructorCalendarTime.svelte";
   import CalendarTime from "$lib/ui/time/CalendarTime.svelte";
+  import AllActivityTime from "$lib/ui/time/AllActivityTime.svelte";
 
   export let data: any;
 
@@ -48,15 +49,18 @@
       <Tab bind:group={tabSet} name="labs" value={1}>Labs</Tab>
       <Tab bind:group={tabSet} name="labs-chart" value={2}>Labs (chart)</Tab>
       <Tab bind:group={tabSet} name="topics" value={3}>Topics</Tab>
+      <Tab bind:group={tabSet} name="topics-chart" value={4}>Topics (chart)</Tab>
+      <Tab bind:group={tabSet} name="activities" value={5}>All Activity</Tab>
+      <Tab bind:group={tabSet} name="activities-chart" value={6}>All Activity (chart)</Tab>
     {:else}
       {#if data.course?.hasCalendar}
-        <Tab bind:group={tabSet} name="calendar-all" value={4}>Calendar</Tab>
+        <Tab bind:group={tabSet} name="calendar-all" value={7}>Calendar</Tab>
       {/if}
       {#if data.course?.hasEnrollment}
-        <Tab bind:group={tabSet} name="LabsAllStudent" value={5}>Labs (enrolled)</Tab>
+        <Tab bind:group={tabSet} name="LabsAllStudent" value={8}>Labs (enrolled)</Tab>
       {/if}
-      <Tab bind:group={tabSet} name="LabsAllStudent" value={6}>Labs(all)</Tab>
-      <Tab bind:group={tabSet} name="allLabsChart" value={7}>Labs(all chart)</Tab>
+      <Tab bind:group={tabSet} name="LabsAllStudent" value={9}>Labs(all)</Tab>
+      <Tab bind:group={tabSet} name="allLabsChart" value={10}>Labs(all chart)</Tab>
     {/if}
   </TabGroup>
   {#if tabSet === 0}
@@ -69,17 +73,23 @@
     <LabTime user={data.user} allLabs={data.allLabs} chart={true} />
   {:else if tabSet === 3}
     <TopicTime user={data.user} allTopics={data.allTopics} chart={false} />
-  {:else if tabSet === 4}
+    {:else if tabSet === 4}
+    <TopicTime user={data.user} allTopics={data.allTopics} chart={true} />
+  {:else if tabSet === 5}
+    <AllActivityTime user={data.user} allActivities={data.allActivities} chart={false} />
+    {:else if tabSet === 6}
+    <AllActivityTime user={data.user} allActivities={data.allActivities} chart={true} />
+    {:else if tabSet === 7}
     {#if data.course?.hasEnrollment}
       <InstructorCalendarTime userMap={data.enrolledUsers} calendarData={data.calendar} />
     {:else}
       <InstructorCalendarTime userMap={data.users} calendarData={data.calendar} />
     {/if}
-  {:else if tabSet === 5}
+  {:else if tabSet === 8}
     <InstructorLabTime userMap={data.enrolledUsers} allLabs={data.allLabs} chart={false} />
-  {:else if tabSet === 6}
+  {:else if tabSet === 9}
     <InstructorLabTime userMap={data.users} allLabs={data.allLabs} chart={false} />
-  {:else if tabSet === 7}
+  {:else if tabSet === 10}
     <InstructorLabTime userMap={data.enrolledUsers} allLabs={data.allLabs} chart={true} />
   {/if}
 </div>

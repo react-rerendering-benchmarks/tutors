@@ -3,23 +3,21 @@
     import { Grid } from "ag-grid-community";
     import "ag-grid-enterprise";
     import type { UserMetric } from "$lib/services/types/metrics";
-    import type { Lo, Topic } from "$lib/services/models/lo-types";
-    import { TopicCountSheet } from "../../services/sheets/topic-count-sheet";
+    import { AllActivityCountSheet } from "../../services/sheets/all-activity-count-sheet";
     import { options } from "../../services/sheets/topic-sheet";
   
     export let chart = false;
     export let user: UserMetric;
-    export let allTopics: Lo[] = [];
+    export let allActivities: any[] = [];
     let time: any;
     let timeGrid;
-    let timeSheet = new TopicCountSheet();
+    let timeSheet = new AllActivityCountSheet();
   
     onMount(async () => {
       timeGrid = new Grid(time, { ...options });
-      if (allTopics.length > 0) {
-        timeSheet.populateCols(allTopics);
-        timeSheet.populateRow(user, allTopics);
-        //timeSheet.populateRows(user, allTopics);
+      if (allActivities.length > 0) {
+        timeSheet.populateCols(allActivities);
+        timeSheet.populateRow(user, allActivities);
         timeSheet.render(timeGrid);
         if (chart) timeSheet.chart(timeGrid, "groupedBar");
       }
@@ -34,4 +32,3 @@
       <div bind:this={time} class="ag-theme-balham h-5/6" />
     {/if}
   </div>
-  

@@ -22,7 +22,8 @@ export const load: PageLoad = async ({ parent, params, fetch }) => {
 
     //const user: UserMetric = await fetchUserById(params.courseid, data.session, allLabs);
      const user: UserMetric = await fetchStudentById(params.courseid, data.session, allLabs, allTopics);
-    // const users: Map<string, UserMetric> = await fetchAllUsers(params.courseid, allLabs);
+     const allLos = user.topics.map((topic) => topic.lo_title);
+     // const users: Map<string, UserMetric> = await fetchAllUsers(params.courseid, allLabs);
     // const enrolledUsers: Map<string, UserMetric> = new Map<string, UserMetric>();
     // if (course.hasEnrollment && course.enrollment) {
     //   for (let i = 0; i < course.enrollment.length; i++) {
@@ -46,6 +47,7 @@ export const load: PageLoad = async ({ parent, params, fetch }) => {
       course: course,
       allLabs: course.wallMap?.get("lab"),
       allTopics: course.los,
+      allActivities: allLos,
       calendar: course.courseCalendar,
       ignorePin: course.ignorePin,
       //users: users,
