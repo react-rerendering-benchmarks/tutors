@@ -339,22 +339,10 @@ function addRoute(user: UserMetric, parentTopic: string, childTopic: string) {
 
 async function updateRoutes(allTopics: any, user: UserMetric) {
   user.routes = {}; 
-  user.allRoutes = []; 
   allTopics.forEach((m) => {
-    if (!user.allRoutes?.includes(m.route)) {
-      user.allRoutes.push(m.route);
-    }
-
     m.los.forEach((t) => {
-      if (!user.allRoutes?.includes(t.route)) {
-        user.allRoutes.push(t.route);
-      }
       addRoute(user, m.route, t.route);
-
       t?.los?.forEach((p) => {
-        if (!user.allRoutes?.includes(p.route)) {
-          user.allRoutes.push(p.route);
-        }
         addRoute(user, t.route, p.route);
       });
     });
@@ -378,8 +366,7 @@ function logAggregatedDurationsForTopic(aggregatedDurations: any, user: any) {
 async function prepareTopicDataForStudent(courseBase: string, user: UserMetric) {
   const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
     user_name: user[0].nickname,
-    course_base: courseBase,
-    routes: user.allRoutes, //maybe remove this
+    course_base: courseBase
   });
 
   user.topics = topics;

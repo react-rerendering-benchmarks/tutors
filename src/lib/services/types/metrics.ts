@@ -41,7 +41,6 @@ export interface UserMetric extends Token {
   duration: number;
   calendar_id: Date;
   routes: { [key: string]: string[] };
-  allRoutes: string[];
   metric: Metric;
   metrics: Metric[];
   topics:TopicData[];
