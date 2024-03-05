@@ -70,6 +70,7 @@ export const analyticsService = {
                 updateLastAccess("id", session.user.user_metadata.user_name, "students");
                 updateDuration("course_id", "course", course.courseId, 1);
                 updateLastAccess("course_id", course.courseId, "course");
+                updateDuration("id", "calendar", formatDate(new Date()), 1);
             }
         } catch (error: any) {
             console.log(`TutorStore Error: ${error.message}`);

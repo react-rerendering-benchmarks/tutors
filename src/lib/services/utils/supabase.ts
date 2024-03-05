@@ -45,6 +45,11 @@ export async function readValue(key: string): Promise<any> {
     return data;
 };
 
+export async function getAllCalendarData(studentId: string): Promise<any> {
+    const { data, error } = await db.from('calendar').select().eq('student_id', studentId);
+    return data;
+};
+
 export async function getCalendarData(id: string, studentId: string): Promise<any> {
     const { data, error } = await db.from('calendar').select().eq('id', formatDate(new Date())).eq('student_id', studentId);
     return data;

@@ -3,6 +3,7 @@ import type { DayMeasure, Metric, UserMetric, TopicPaths, TopicData, AggregatedT
 import type { Lo } from "$lib/services/models/lo-types";
 import { db } from "$lib/db/client";
 import type { User } from "@supabase/supabase-js";
+import { getAllCalendarData, getCalendarData } from "./supabase";
 
 function populateCalendar(user: UserMetric) {
   user.calendarActivity = [];
@@ -257,18 +258,19 @@ function updateUserObject(user: UserMetric, data: any) {
   user.nickname = data[0].nickname;
 }
 
-function populateStudentCalendar(user: any) {
+async function populateStudentCalendar(user: any) {
   user.calendarActivity = [];
-  if (user) {
-    user.forEach(item => {
-      const calendarId = item.calendar_id;
+ let data = await getAllCalendarData(user[0].nickname)
+  if (data) {
+    data.forEach(item => {
+      const calendarId = item.id;
       const dayMeasure: DayMeasure = {
         date: calendarId,
         dateObj: Date.parse(calendarId),
-        metric: item.total_duration,
+        metric: item.duration,
       };
       user.calendarActivity.push(dayMeasure);
-    });
+   });
   }
 }
 
