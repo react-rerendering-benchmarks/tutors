@@ -338,7 +338,7 @@ function addRoute(user: UserMetric, parentTopic: string, childTopic: string) {
 };
 
 async function updateRoutes(allTopics: any, user: UserMetric) {
-  user.routes = {}; 
+  user.routes = {};
   allTopics.forEach((m) => {
     m.los.forEach((t) => {
       addRoute(user, m.route, t.route);

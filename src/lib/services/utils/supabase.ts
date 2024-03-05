@@ -224,13 +224,13 @@ export const updateLastAccess = async (key: string, id: string, table: any): Pro
     }
 };
 
-export async function addLo(loid: string, currentLo: Lo) {
+export async function addLo(loid: string, currentLo: Lo, loTitle: string) {
     const { error } = await db
         .from('learningobject')
         .insert({
             id: loid,
             type: currentLo.type,
-            name: currentLo.title,
+            name: loTitle,
             date_last_accessed: new Date().toISOString(),
             parent: currentLo.parentLo ? currentLo.parentLo.route : null,
             lo_img: currentLo.img,
@@ -338,10 +338,10 @@ export const updateDuration = async (key: string, table: string, id: string, inc
         .eq(key, id);
 };
 
-export async function insertOrUpdateLoEvent(loid: string, currentLo: Lo) {
+export async function insertOrUpdateLoEvent(loid: string, currentLo: Lo, loTitle: string) {
     const { data, error } = await db.from('learningobject').select().eq('id', loid);
     if (data === null || data.length === 0) {
-        await addLo(loid, currentLo);
+        await addLo(loid, currentLo, loTitle);
     } else {
         await updateLo(loid, currentLo);
     }
@@ -358,11 +358,13 @@ export async function insertOrUpdateStudent(userDetails: User) {
     }
 };
 
-export async function storeStudentCourseLearningObjectInSupabase(course: Course, loid:string, lo: Lo, userDetails: User) {
+export async function storeStudentCourseLearningObjectInSupabase(course: Course, params: any, loid:string, lo: Lo, userDetails: User) {
+    let loTitle: string = "";
+    loTitle = getLoTitle(params)
     if (userDetails?.user_metadata.full_name === "Anon") return;
     await insertOrUpdateCourse(course);
     await insertOrUpdateStudent(userDetails);
-    await insertOrUpdateLoEvent(loid, lo);
+    await insertOrUpdateLoEvent(loid, lo, loTitle);
     await handleInteractionData(course,loid, lo, userDetails);
     await insertOrUpdateCalendar(userDetails.user_metadata.user_name);
 };
@@ -384,4 +386,18 @@ export async function insertOrUpdateCourse(course: any) {
         } else {
             await updateCourse(course);
         }
+};
+
+export function getLoTitle(params: any): string | undefined {
+    if (params.lab || params.lab?.currentChapterTitle !== undefined) {
+        return params.lab.currentChapterTitle;
+    } else if (params.lo || params.lo?.title !== undefined) {
+        return params.lo.title 
+    } else if (params.lo || params.lo?.id !== undefined) {
+        return params.lo.id 
+    } else if (params.topic || params.topic?.title !== undefined) {
+        return params.topic.title;
+    } else{
+        return undefined;
+    }
 };

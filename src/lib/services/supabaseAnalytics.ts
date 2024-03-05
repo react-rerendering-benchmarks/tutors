@@ -9,6 +9,7 @@ import { formatDate } from "./utils/metrics";
 let course: Course;
 let user: TokenResponse;
 let lo: Lo;
+let loid : string;
 
 currentCourse.subscribe((current) => {
     course = current;
@@ -21,8 +22,9 @@ currentLo.subscribe((current) => {
 });
 
 export const analyticsService = {
-    learningEvent(params: Record<string, string>, session: TokenResponse) {
+    learningEvent(params: any, session: TokenResponse) {
         try {
+            loid = params?.params?.loid;
             this.reportPageLoad(params, session);
         } catch (error: any) {
             console.log(`TutorStore Error: ${error.message}`);
@@ -51,9 +53,9 @@ export const analyticsService = {
         }
     },
 
-    reportPageLoad(params: Record<string, string>, session: TokenResponse) {
+    reportPageLoad(params: any, session: TokenResponse) {
         try {
-            storeStudentCourseLearningObjectInSupabase(course, params.loid, lo, session?.user);
+            storeStudentCourseLearningObjectInSupabase(course, params.data, params?.params?.loid, lo, session?.user);
             presenceService.sendLoEvent(course, lo, get(onlineStatus), session?.user);
         } catch (error: any) {
             console.log(`TutorStore Error: ${error.message}`);
@@ -63,12 +65,11 @@ export const analyticsService = {
     updatePageCount(session: TokenResponse) {
         try {
             if (session?.user) {
-                updateStudentCourseLoInteractionDuration(course.courseId, session?.user.user_metadata.user_name, lo.route, 1);
+                updateStudentCourseLoInteractionDuration(course.courseId, session?.user.user_metadata.user_name, loid, 1);
                 updateDuration("id", "students", session.user.user_metadata.user_name, 1);
                 updateLastAccess("id", session.user.user_metadata.user_name, "students");
                 updateDuration("course_id", "course", course.courseId, 1);
                 updateLastAccess("course_id", course.courseId, "course");
-                updateDuration("id", "calendar", formatDate(new Date()), 1);
             }
         } catch (error: any) {
             console.log(`TutorStore Error: ${error.message}`);

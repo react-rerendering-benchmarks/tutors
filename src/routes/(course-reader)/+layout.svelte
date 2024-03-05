@@ -60,7 +60,9 @@
       currentRoute = path.route.id;
     }
     if (path.params.courseid && getKeys().firebase.apiKey !== "XXX" && !$currentCourse.isPrivate) {
-      analyticsService.learningEvent(path.params, session);
+      //analyticsService.learningEvent(path.params, session);
+      analyticsService.learningEvent(path, session);
+
     }
     if (path.url.hash && !path.url.hash.startsWith("#access_token")) {
       const el = document.querySelector(`[id="${path.url.hash}"]`);
