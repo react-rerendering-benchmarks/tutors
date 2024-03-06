@@ -185,8 +185,10 @@ export async function fetchStudentById(courseUrl: string, session: any, allLabs,
     }
 
     if (allTopics) {
-      await updateRoutes(allTopics, user);
-      await prepareTopicDataForStudent(courseBase, user);
+     // await updateRoutes(allTopics, user);
+     // await prepareTopicDataForStudent(courseBase, user);
+     await populateTopics(courseBase, user);
+     await updateStudentMetricsTopicData(courseBase, user);
     }
     populateStudentsTopicUsage(user, allTopics);
     updateUserObject(user, student);
@@ -225,7 +227,7 @@ function aggregateDurations(data: TopicData[], paths: TopicPaths): { [parentTopi
 }
 
 async function updateStudentMetrics(courseBase: string, user: any) {
-  const { data: metrics, error: metricsError } = await db.rpc('get_lab_usage', {
+  const { data: metrics, error: metricsError } = await db.rpc('get_lab_data', {
     user_name: user[0].nickname,
     course_base: courseBase
   });
@@ -240,9 +242,36 @@ async function updateStudentMetrics(courseBase: string, user: any) {
   };
 
   metrics.forEach((m) => {
-    const metricObject: { [key: string]: number } = {};
-    metricObject[m.calendar_id] = m.total_duration;
-    metricObject['title'] = m.lo_title;
+    const metricObject: { [key: string]: number | string | undefined } = {};
+    //metricObject[m.calendar_id] = m.total_duration;
+   // metricObject['title'] = removeTrailingSlash(m.title);
+    metricObject['route'] = m.lochild ? removeTrailingSlash(m.lochild) : undefined;
+    metricObject['count'] = m.total_duration;
+
+    user.metric.metrics.push(metricObject);
+  });
+}
+
+async function updateStudentMetricsTopicData(courseBase: string, user: any) {
+  const { data: metrics, error: metricsError } = await db.rpc('get_topic_data', {
+    user_name: user[0].nickname,
+    course_base: courseBase
+  });
+
+  if (metricsError) {
+    throw metricsError;
+  }
+
+  user.metric = {
+    id: 'toppic',
+    metrics: []
+  };
+
+  metrics.forEach((m) => {
+    const metricObject: { [key: string]: number | string | undefined } = {};
+    //metricObject[m.calendar_id] = m.total_duration;
+   // metricObject['title'] = removeTrailingSlash(m.title);
+    metricObject['route'] = m.loparent ? removeTrailingSlash(m.loparent) : undefined;
     metricObject['count'] = m.total_duration;
 
     user.metric.metrics.push(metricObject);
@@ -258,7 +287,7 @@ function updateUserObject(user: UserMetric, data: any) {
   user.nickname = data[0].nickname;
 }
 
-async function populateStudentCalendar(user: any) {
+async function populateStudentCalendar(user: UserMetric) {
   user.calendarActivity = [];
  let data = await getAllCalendarData(user[0].nickname)
   if (data) {
@@ -277,8 +306,11 @@ async function populateStudentCalendar(user: any) {
 async function populateStudentsLabUsage(user: UserMetric, allLabs: Lo[]) {
   user.labActivity = [];
   for (const lab of allLabs) {
-    const labActivity = findInStudent(lab.title, user);
+    const labActivity= findInStudent(lab.route, user);
+    if(labActivity !== null){
+    labActivity.title = lab.title;
     user.labActivity.push(labActivity);
+    }
   }
 }
 
@@ -287,10 +319,10 @@ function findInStudent(title: string, user: any) {
 }
 
 function findInStudentMetric(title: string, metric: any) {
-  if (title === metric.title) {
+  if (title === metric.route) {
     return metric;
-  } else if (metric.length > 0) {
-    return findInStudentMetrics(title, metric);
+  } else if (metric.metrics?.length > 0 || metric.metrics?.count > 0) {
+    return findInStudentMetrics(title, metric.metrics);
   } else {
     return null;
   }
@@ -315,9 +347,11 @@ function findInStudentMetrics(title: string, calendar: any): Metric {
 async function populateStudentsTopicUsage(user: UserMetric, allTopics: Lo[]) {
   user.topicActivity = [];
   for (const topic of allTopics) {
-    const topicActivity = findInStudent(topic.route, user);
+    const topicActivity: Metric= findInStudent(topic.route, user);
+    if(topicActivity !== null){
     topicActivity.title = topic.title;
     user.topicActivity.push(topicActivity);
+    }
   }
 }
 
@@ -355,7 +389,6 @@ function logAggregatedDurationsForTopic(aggregatedDurations: any, user: any) {
   for (const parentTopic in aggregatedDurations) {
     if (aggregatedDurations.hasOwnProperty(parentTopic)) {
       const metricObject: { [key: string]: number | string } = {};
-
       metricObject[aggregatedDurations[parentTopic].calendar_id] = aggregatedDurations[parentTopic].total_duration;
       metricObject['title'] = parentTopic;
       metricObject['count'] = aggregatedDurations[parentTopic].total_duration;
@@ -378,8 +411,19 @@ async function prepareTopicDataForStudent(courseBase: string, user: UserMetric) 
   }
 
   const topicPaths: TopicPaths = user.routes;
-
   const aggregatedDurations = aggregateDurations(user.topics, topicPaths);
   logAggregatedDurationsForTopic(aggregatedDurations, user);
 }
 
+async function populateTopics(courseBase: string, user: UserMetric) {
+  const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
+    user_name: user[0].nickname,
+    course_base: courseBase
+  });
+
+  user.topics = topics;
+
+  if (topicsError) {
+    throw topicsError;
+  }
+};

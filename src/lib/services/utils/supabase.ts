@@ -238,6 +238,7 @@ export async function addLo(loid: string, currentLo: Lo, loTitle: string) {
             name: loTitle,
             date_last_accessed: new Date().toISOString(),
             parent: currentLo.parentLo ? currentLo.parentLo.route : null,
+            child: currentLo.route,
             lo_img: currentLo.img,
             icon: currentLo.icon
         });
