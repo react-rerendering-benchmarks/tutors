@@ -198,33 +198,7 @@ export async function fetchStudentById(courseUrl: string, session: any, allLabs,
   return user;
 };
 
-function aggregateDurations(data: TopicData[], paths: TopicPaths): { [parentTopic: string]: AggregatedTopicData } {
-  const aggregatedDurations: { [parentTopic: string]: AggregatedTopicData } = {};
 
-  for (const parentTopic in paths) {
-    if (paths.hasOwnProperty(parentTopic)) {
-      const children = paths[parentTopic];
-
-      aggregatedDurations[parentTopic] = {
-        total_duration: 0,
-        title: '',
-        calendar_id: ''
-      };
-
-      // Add durations of children to the parent topic
-      for (const child of children) {
-        const topicData = data.find(item => item.title === child);
-        if (topicData) {
-          aggregatedDurations[parentTopic].total_duration += topicData.total_duration;
-          aggregatedDurations[parentTopic].title = topicData.title;
-          aggregatedDurations[parentTopic].calendar_id = topicData.calendar_id;
-        }
-      }
-    }
-  }
-
-  return aggregatedDurations;
-}
 
 async function updateStudentMetrics(courseBase: string, user: any) {
   const { data: metrics, error: metricsError } = await db.rpc('get_lab_data', {
@@ -373,30 +347,20 @@ function addRoute(user: UserMetric, parentTopic: string, childTopic: string) {
   }
 };
 
-async function updateRoutes(allTopics: any, user: UserMetric) {
-  user.routes = {};
-  allTopics.forEach((m) => {
-    m.los.forEach((t) => {
-      addRoute(user, m.route, t.route);
-      t?.los?.forEach((p) => {
-        addRoute(user, t.route, p.route);
-      });
-    });
+async function populateTopics(courseBase: string, user: UserMetric) {
+  const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
+    user_name: user[0].nickname,
+    course_base: courseBase
   });
-};
 
-function logAggregatedDurationsForTopic(aggregatedDurations: any, user: any) {
-  for (const parentTopic in aggregatedDurations) {
-    if (aggregatedDurations.hasOwnProperty(parentTopic)) {
-      const metricObject: { [key: string]: number | string } = {};
-      metricObject[aggregatedDurations[parentTopic].calendar_id] = aggregatedDurations[parentTopic].total_duration;
-      metricObject['title'] = parentTopic;
-      metricObject['count'] = aggregatedDurations[parentTopic].total_duration;
+  user.topics = topics;
 
-      user.metric.metrics.push(metricObject);
-    }
+  if (topicsError) {
+    throw topicsError;
   }
 };
+
+//not needed after all with new version
 
 async function prepareTopicDataForStudent(courseBase: string, user: UserMetric) {
   const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
@@ -415,15 +379,55 @@ async function prepareTopicDataForStudent(courseBase: string, user: UserMetric) 
   logAggregatedDurationsForTopic(aggregatedDurations, user);
 }
 
-async function populateTopics(courseBase: string, user: UserMetric) {
-  const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
-    user_name: user[0].nickname,
-    course_base: courseBase
+async function updateRoutes(allTopics: any, user: UserMetric) {
+  user.routes = {};
+  allTopics.forEach((m) => {
+    m.los.forEach((t) => {
+      addRoute(user, m.route, t.route);
+      t?.los?.forEach((p) => {
+        addRoute(user, t.route, p.route);
+      });
+    });
   });
+};
 
-  user.topics = topics;
+function aggregateDurations(data: TopicData[], paths: TopicPaths): { [parentTopic: string]: AggregatedTopicData } {
+  const aggregatedDurations: { [parentTopic: string]: AggregatedTopicData } = {};
 
-  if (topicsError) {
-    throw topicsError;
+  for (const parentTopic in paths) {
+    if (paths.hasOwnProperty(parentTopic)) {
+      const children = paths[parentTopic];
+
+      aggregatedDurations[parentTopic] = {
+        total_duration: 0,
+        title: '',
+        calendar_id: ''
+      };
+
+      // Add durations of children to the parent topic
+      for (const child of children) {
+        const topicData = data.find(item => item.title === child);
+        if (topicData) {
+          aggregatedDurations[parentTopic].total_duration += topicData.total_duration;
+          aggregatedDurations[parentTopic].title = topicData.title;
+          aggregatedDurations[parentTopic].calendar_id = topicData.calendar_id;
+        }
+      }
+    }
+  }
+
+  return aggregatedDurations;
+}
+
+function logAggregatedDurationsForTopic(aggregatedDurations: any, user: any) {
+  for (const parentTopic in aggregatedDurations) {
+    if (aggregatedDurations.hasOwnProperty(parentTopic)) {
+      const metricObject: { [key: string]: number | string } = {};
+      metricObject[aggregatedDurations[parentTopic].calendar_id] = aggregatedDurations[parentTopic].total_duration;
+      metricObject['title'] = parentTopic;
+      metricObject['count'] = aggregatedDurations[parentTopic].total_duration;
+
+      user.metric.metrics.push(metricObject);
+    }
   }
 };
