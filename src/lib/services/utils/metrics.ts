@@ -1,9 +1,8 @@
 import { child, get, getDatabase, ref } from "firebase/database";
-import type { DayMeasure, Metric, UserMetric, TopicPaths, TopicData, AggregatedTopicData } from "$lib/services/types/metrics";
+import type { DayMeasure, Metric, UserMetric} from "$lib/services/types/metrics";
 import type { Lo } from "$lib/services/models/lo-types";
 import { db } from "$lib/db/client";
-import type { User } from "@supabase/supabase-js";
-import { getAllCalendarData, getCalendarData } from "./supabase";
+import { getAllCalendarData } from "./supabase";
 
 function populateCalendar(user: UserMetric) {
   user.calendarActivity = [];
@@ -185,8 +184,6 @@ export async function fetchStudentById(courseUrl: string, session: any, allLabs,
     }
 
     if (allTopics) {
-     // await updateRoutes(allTopics, user);
-     // await prepareTopicDataForStudent(courseBase, user);
      await populateTopics(courseBase, user);
      await updateStudentMetricsTopicData(courseBase, user);
     }
@@ -197,8 +194,6 @@ export async function fetchStudentById(courseUrl: string, session: any, allLabs,
   }
   return user;
 };
-
-
 
 async function updateStudentMetrics(courseBase: string, user: any) {
   const { data: metrics, error: metricsError } = await db.rpc('get_lab_data', {
@@ -217,8 +212,6 @@ async function updateStudentMetrics(courseBase: string, user: any) {
 
   metrics.forEach((m) => {
     const metricObject: { [key: string]: number | string | undefined } = {};
-    //metricObject[m.calendar_id] = m.total_duration;
-   // metricObject['title'] = removeTrailingSlash(m.title);
     metricObject['route'] = m.lochild ? removeTrailingSlash(m.lochild) : undefined;
     metricObject['count'] = m.total_duration;
 
@@ -237,14 +230,12 @@ async function updateStudentMetricsTopicData(courseBase: string, user: any) {
   }
 
   user.metric = {
-    id: 'toppic',
+    id: 'topic',
     metrics: []
   };
 
   metrics.forEach((m) => {
     const metricObject: { [key: string]: number | string | undefined } = {};
-    //metricObject[m.calendar_id] = m.total_duration;
-   // metricObject['title'] = removeTrailingSlash(m.title);
     metricObject['route'] = m.loparent ? removeTrailingSlash(m.loparent) : undefined;
     metricObject['count'] = m.total_duration;
 
@@ -334,19 +325,6 @@ function removeTrailingSlash(str: string): string {
   return str.replace(/\/$/, '');
 };
 
-// Function to handle adding routes to the routes object
-function addRoute(user: UserMetric, parentTopic: string, childTopic: string) {
-  parentTopic = removeTrailingSlash(parentTopic);
-  childTopic = removeTrailingSlash(childTopic);
-  if (!user.routes[parentTopic]) {
-    user.routes[parentTopic] = [];
-  }
-
-  if (!user.routes[parentTopic].includes(childTopic)) {
-    user.routes[parentTopic].push(childTopic);
-  }
-};
-
 async function populateTopics(courseBase: string, user: UserMetric) {
   const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
     user_name: user[0].nickname,
@@ -360,74 +338,3 @@ async function populateTopics(courseBase: string, user: UserMetric) {
   }
 };
 
-//not needed after all with new version
-
-async function prepareTopicDataForStudent(courseBase: string, user: UserMetric) {
-  const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
-    user_name: user[0].nickname,
-    course_base: courseBase
-  });
-
-  user.topics = topics;
-
-  if (topicsError) {
-    throw topicsError;
-  }
-
-  const topicPaths: TopicPaths = user.routes;
-  const aggregatedDurations = aggregateDurations(user.topics, topicPaths);
-  logAggregatedDurationsForTopic(aggregatedDurations, user);
-}
-
-async function updateRoutes(allTopics: any, user: UserMetric) {
-  user.routes = {};
-  allTopics.forEach((m) => {
-    m.los.forEach((t) => {
-      addRoute(user, m.route, t.route);
-      t?.los?.forEach((p) => {
-        addRoute(user, t.route, p.route);
-      });
-    });
-  });
-};
-
-function aggregateDurations(data: TopicData[], paths: TopicPaths): { [parentTopic: string]: AggregatedTopicData } {
-  const aggregatedDurations: { [parentTopic: string]: AggregatedTopicData } = {};
-
-  for (const parentTopic in paths) {
-    if (paths.hasOwnProperty(parentTopic)) {
-      const children = paths[parentTopic];
-
-      aggregatedDurations[parentTopic] = {
-        total_duration: 0,
-        title: '',
-        calendar_id: ''
-      };
-
-      // Add durations of children to the parent topic
-      for (const child of children) {
-        const topicData = data.find(item => item.title === child);
-        if (topicData) {
-          aggregatedDurations[parentTopic].total_duration += topicData.total_duration;
-          aggregatedDurations[parentTopic].title = topicData.title;
-          aggregatedDurations[parentTopic].calendar_id = topicData.calendar_id;
-        }
-      }
-    }
-  }
-
-  return aggregatedDurations;
-}
-
-function logAggregatedDurationsForTopic(aggregatedDurations: any, user: any) {
-  for (const parentTopic in aggregatedDurations) {
-    if (aggregatedDurations.hasOwnProperty(parentTopic)) {
-      const metricObject: { [key: string]: number | string } = {};
-      metricObject[aggregatedDurations[parentTopic].calendar_id] = aggregatedDurations[parentTopic].total_duration;
-      metricObject['title'] = parentTopic;
-      metricObject['count'] = aggregatedDurations[parentTopic].total_duration;
-
-      user.metric.metrics.push(metricObject);
-    }
-  }
-};
