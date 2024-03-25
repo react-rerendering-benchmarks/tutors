@@ -1,4 +1,5 @@
 import PartySocket from "partysocket";
+import WS from "ws";
 import type { Course, Lo } from "./models/lo-types";
 import type { User } from "./types/auth";
 import { currentCourse, studentsOnline, studentsOnlineList, coursesOnline, coursesOnlineList, allStudentsOnlineList, allStudentsOnline } from "$lib/stores";
@@ -13,7 +14,8 @@ let partyKitAll = <PartySocket>{};
 if (PUBLIC_party_kit_main_room !== "XXX") {
   partyKitAll = new PartySocket({
     host: partyKitServer,
-    room: "tutors-all-course-access"
+    room: "tutors-all-course-access",
+    WebSocket: WS
   });
 }
 
