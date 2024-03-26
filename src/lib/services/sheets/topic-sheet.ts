@@ -1,5 +1,5 @@
 import type { Grid, ICellRendererParams } from "ag-grid-community";
-import type { Lo, Topic } from "$lib/services/models/lo-types";
+import type { Lo} from "$lib/services/models/lo-types";
 import type { UserMetric } from "$lib/services/types/metrics";
 
 interface TopicSheetColumn {

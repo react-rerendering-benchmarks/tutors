@@ -67,8 +67,8 @@ export async function insertOrUpdateCalendar(studentId: string) {
                 count: 1,
             });
     } else {
-        const durationPromise = getDurationTotal("id", "calendar", formatDate(new Date()), 1);
-        const countPromise = getCountTotal("id", "calendar", formatDate(new Date()), 1);
+        const durationPromise = getCalendarDurationTotal(formatDate(new Date()), studentId);
+        const countPromise = getCalendarCountTotal(formatDate(new Date()), studentId);
         const [duration, count] = await Promise.all([durationPromise, countPromise]);
         await db
             .from('calendar')
@@ -76,7 +76,9 @@ export async function insertOrUpdateCalendar(studentId: string) {
                 duration: duration,
                 count: count,
             })
-            .eq('id', formatDate(new Date()));
+            .eq('id', formatDate(new Date()))
+            .eq('student_id', studentId);
+
     }
 };
 
@@ -240,7 +242,10 @@ export async function addLo(loid: string, currentLo: Lo, loTitle: string) {
             parent: currentLo.parentLo ? currentLo.parentLo.route : null,
             child: currentLo.route,
             lo_img: currentLo.img,
-            icon: currentLo.icon
+            icon: currentLo.icon,
+            topic_title: currentLo.parentTopic ? currentLo.parentTopic.title : null,
+            lab_title: currentLo.type === 'lab' ? currentLo.title : null,
+
         });
 };
 
@@ -313,6 +318,42 @@ export const getCountTotal = async (key: string, table: string, id: string, incr
     return newCount;
 };
 
+export const getCalendarDurationTotal = async (id: string, studentId: string) => {
+    const { data, error } = await db
+        .from('calendar')
+        .select('duration')
+        .eq('id', id)
+        .eq('student_id', studentId)
+        .single();
+
+    if (data === null || data === undefined) {
+        console.warn(`No data found for the calendar with ${id} ${studentId}`);
+        return null;
+    }
+
+    const num = data?.duration || 0;
+    const newCount = num + 1;
+    return newCount;
+};
+
+export const getCalendarCountTotal = async (id: string, studentId: string) => {
+    const { data, error } = await db
+        .from('calendar')
+        .select('count')
+        .eq('id', id)
+        .eq('student_id', studentId)
+        .single();
+
+    if (data === null || data === undefined) {
+        console.warn(`No data found for the calendar with ${id} ${studentId}`);
+        return null;
+    }
+
+    const num = data?.count || 0;
+    const newCount = num + 1;
+    return newCount;
+};
+
 export const updateCount= async (key: string, table: string, id: string, incrementBy: number) => {
     const { data, error } = await db
         .from(table)
@@ -343,6 +384,42 @@ export const updateDuration = async (key: string, table: string, id: string, inc
         .update({ 'duration': newCount })
         .eq(key, id);
 };
+
+export const updateCalendarCount= async (id: string, studentId: string) => {
+    const { data, error } = await db
+        .from('calendar')
+        .select('count')
+        .eq('id', id)
+        .eq('student_id', studentId)
+        .single();
+
+    const num = data?.count || 0;
+    const newCount = num + 1;
+
+    await db
+        .from('calendar')
+        .update({ 'count': newCount })
+        .eq('id', id)
+        .eq('student_id', studentId);
+};
+
+export const updateCalendarDuration = async (id: string, studentId: string) => {
+    const { data, error } = await db
+        .from('calendar')
+        .select('duration')
+        .eq('id', id)
+        .eq('student_id', studentId)
+        .single();
+
+    const num = data?.duration|| 0;
+    const newCount = num + 1;
+    await db
+        .from('calendar')
+        .update({ 'duration': newCount })
+        .eq('id', id)
+        .eq('student_id', studentId);
+};
+
 
 export async function insertOrUpdateLoEvent(loid: string, currentLo: Lo, loTitle: string) {
     const { data, error } = await db.from('learningobject').select().eq('id', loid);
@@ -378,7 +455,7 @@ export async function storeStudentCourseLearningObjectInSupabase(course: Course,
 export async function handleInteractionData(course: Course,loid: string, lo: Lo, userDetails: User) {
     const getInteractionData = await getStudentCoursesLearningObjects(course.courseId, userDetails.user_metadata.user_name, loid);
 
-    if (getInteractionData === null || getInteractionData.length === 0) {
+    if (getInteractionData === null && loid !== null  || getInteractionData.length === 0) {
         await insertStudentCourseLoTable(course.courseId, userDetails.user_metadata.user_name, loid);
     } else {
         await updateStudentCourseLoTable(course.courseId, userDetails.user_metadata.user_name, loid);

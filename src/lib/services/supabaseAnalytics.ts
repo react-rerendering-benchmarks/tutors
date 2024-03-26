@@ -2,7 +2,7 @@ import { get } from "svelte/store";
 import type { Course, Lo } from "$lib/services/models/lo-types";
 import type { TokenResponse } from "$lib/services/types/auth";
 import { currentCourse, currentLo, currentUser, onlineStatus } from "$lib/stores";
-import { readValue, updateStudentsStatus, supabaseAddStudent, supabaseUpdateStudent, getStudents, updateLastAccess, storeStudentCourseLearningObjectInSupabase, updateStudentCourseLoInteractionDuration, updateDuration } from "$lib/services/utils/supabase";
+import { readValue, updateStudentsStatus, supabaseAddStudent, supabaseUpdateStudent, getStudents, updateLastAccess, storeStudentCourseLearningObjectInSupabase, updateStudentCourseLoInteractionDuration, updateDuration, updateCalendarDuration } from "$lib/services/utils/supabase";
 import { presenceService } from "./presence";
 import { formatDate } from "./utils/metrics";
 
@@ -70,7 +70,7 @@ export const analyticsService = {
                 updateLastAccess("id", session.user.user_metadata.user_name, "students");
                 updateDuration("course_id", "course", course.courseId, 1);
                 updateLastAccess("course_id", course.courseId, "course");
-                updateDuration("id", "calendar", formatDate(new Date()), 1);
+                updateCalendarDuration(formatDate(new Date()), session.user.user_metadata.user_name);
             }
         } catch (error: any) {
             console.log(`TutorStore Error: ${error.message}`);

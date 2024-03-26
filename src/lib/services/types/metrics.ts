@@ -44,6 +44,7 @@ export interface UserMetric extends Token {
   metric: Metric;
   metrics: Metric[];
   topics:TopicData[];
+  detailedLabInfo:TopicData[];
   labActivity: Metric[];
   calendarActivity: DayMeasure[];
   topicActivity: Metric[];
@@ -76,6 +77,7 @@ export interface TopicData {
   title: string;
   lo_title: string;
   total_duration: number;
+  lab_title: string;
   metrics: Metric[];
 }
 
