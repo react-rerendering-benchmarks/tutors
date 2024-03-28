@@ -427,7 +427,7 @@ export async function storeStudentCourseLearningObjectInSupabase(course: Course,
 
 export async function handleInteractionData(courseId: string, studentId: string, loId: string) {
     const interactionInfo = await getStudentCoursesLearningObjects(courseId, studentId, loId)
-    if (interactionInfo.length === 0 || interactionInfo === null) {
+    if (interactionInfo?.length === 0 || interactionInfo === null) {
         await addStudentCourseInteraction(courseId, studentId, loId);
     } else {
         await updateStudentCourseLoTable(courseId, studentId, loId);

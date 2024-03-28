@@ -218,7 +218,6 @@ export async function fetchAllStudents(courseUrl: string, allLabs, allTopics): P
     }
 
     for (const student of students) {
-
       user = student;
       await updateStudentMetrics(courseBase, user);
       populateStudentCalendar(courseBase, user);
@@ -364,25 +363,11 @@ async function populateStudentsTopicUsage(user: UserMetric, allTopics: Lo[]) {
   }
 }
 
-// Function to remove trailing '/' from a string
 function removeTrailingSlash(str: string): string {
   return str.replace(/\/$/, '');
 };
 
 async function populateTopics(courseBase: string, user: UserMetric) {
-  const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
-    user_name: user.nickname,
-    course_base: courseBase
-  });
-
-  if (topicsError) {
-    throw topicsError;
-  }
-
-  user.topics = topics;
-};
-
-async function populateTopicsv2(courseBase: string, user: UserMetric) {
   const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
     user_name: user.nickname,
     course_base: courseBase
@@ -404,7 +389,5 @@ async function populateDetailedLabInfo(courseBase: string, user: UserMetric) {
   if (detailedLabInfoError) {
     throw detailedLabInfoError;
   }
-
   user.detailedLabInfo = detailedLabInfo;
 }
-
