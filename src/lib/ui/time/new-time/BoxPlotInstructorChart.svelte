@@ -14,15 +14,10 @@
     labBoxPlot.renderBoxPlot(document.getElementById("heatmap-container"), boxplotData, userNicknames);
     const combinedBoxplotData = labBoxPlot.prepareCombinedBoxplotData(userMap);
      labBoxPlot.renderCombinedBoxplotChart(document.getElementById('combinedBoxPlot'), combinedBoxplotData);
-    // });
   });
 </script>
 
 <div class="h-screen">
-  <!-- {#each Array.from(userMap.keys()) as userId} -->
-    <!-- <div id={`chart-${userId}`} style="height: 100%; width:100%"></div> -->
     <div id={"heatmap-container"} style="height: 50%; width:100%; overflow-y: scroll;"></div>
     <div id={"combinedBoxPlot"} style="height: 50%; width:100%; overflow-y: scroll;"></div>
-
-  <!-- {/each} -->
 </div>

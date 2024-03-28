@@ -33,7 +33,6 @@ type EChartsOption = echarts.ComposeOption<
 >;
 
 var option: EChartsOption;
-let listOfLabs: any[] = [];
 let user: UserMetric;
 
 const piePatternSrc =
@@ -46,16 +45,16 @@ const bgPatternImg = new Image();
 bgPatternImg.src = bgPatternSrc;
 
 export class LabCountSheet {
-    chartRendered: boolean = false;
-
     constructor() {
         this.myChart = null;
+        this.listOfLabs = [];
+
 
     }
 
     populateCols(los: Lo[]) {
         los.forEach((lab) => {
-            listOfLabs.push(lab.title);
+            this.listOfLabs.push(lab.title);
         });
     }
 
@@ -66,7 +65,7 @@ export class LabCountSheet {
     renderChart() {
         if (this.myChart === null) {
             // If chart instance doesn't exist, create a new one
-            this.myChart = echarts.init(document.getElementById('chart'));
+            this.myChart = echarts.init(document.getElementById('chart-' + user.nickname));
         }
 
         const grid = {
@@ -205,10 +204,7 @@ export class LabCountSheet {
                 borderWidth: 3,
                 borderColor: '#235894'
             },
-            data: user.detailedLabInfo.map((lab) => ({
-                value: lab.total_duration / 2,
-                name: lab.title
-            }))
+            data: []
         });
 
         // Option Configuration
@@ -217,8 +213,9 @@ export class LabCountSheet {
                 image: bgPatternImg,
                 repeat: 'repeat'
             },
-            xAxis: { type: 'value' },
-            yAxis: { type: 'category', data: listOfLabs, axisLabel: { fontSize: 14 } },
+            xAxis: { type: 'value'},
+            yAxis: { type: 'category', data:this.listOfLabs.filter(lab => lab)
+             , axisLabel: { fontSize: 14 } },
             tooltip: {
                 trigger: 'item',
                 formatter: '{a} <br/>{b}: {c} ({d}%)'
@@ -253,7 +250,7 @@ export class LabCountSheet {
                 });
 
                 // Update the data for the outer pie chart
-                const chartInstance = echarts.getInstanceByDom(document.getElementById('chart'));
+                const chartInstance = echarts.getInstanceByDom(document.getElementById('chart-' + user.nickname));
                 if (chartInstance) {
                     chartInstance.setOption({
                         series: [{ name: 'Outer Pie', data: outerPieData }]

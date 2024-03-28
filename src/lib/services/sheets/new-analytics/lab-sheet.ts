@@ -43,7 +43,6 @@ export class LabSheet {
   }
 
   getChartContainer() {
-    // Assuming there is one container for the whole heatmap
     const container = document.getElementById('heatmap-container');
     if (container) {
       container.style.width = '100%';
