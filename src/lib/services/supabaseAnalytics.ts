@@ -2,7 +2,7 @@ import { get } from "svelte/store";
 import type { Course, Lo } from "$lib/services/models/lo-types";
 import type { TokenResponse } from "$lib/services/types/auth";
 import { currentCourse, currentLo, currentUser, onlineStatus } from "$lib/stores";
-import { readValue, updateStudentsStatus, supabaseAddStudent, supabaseUpdateStudent, getStudents, updateLastAccess, storeStudentCourseLearningObjectInSupabase, updateStudentCourseLoInteractionDuration, updateDuration, updateCalendarDuration } from "$lib/services/utils/supabase";
+import { readValue, updateStudentsStatus, updateLastAccess, storeStudentCourseLearningObjectInSupabase, updateStudentCourseLoInteractionDuration, updateDuration, updateCalendarDuration, addOrUpdateStudent } from "$lib/services/utils/supabase";
 import { presenceService } from "./presence";
 import { formatDate } from "./utils/metrics";
 
@@ -65,22 +65,21 @@ export const analyticsService = {
     updatePageCount(session: TokenResponse) {
         try {
             if (session?.user) {
-                updateStudentCourseLoInteractionDuration(course.courseId, session?.user.user_metadata.user_name, loid, 1);
-                updateDuration("id", "students", session.user.user_metadata.user_name, 1);
+                updateStudentCourseLoInteractionDuration(course.courseId, session?.user.user_metadata.user_name, loid);
+                updateDuration("id", "students", session.user.user_metadata.user_name);
                 updateLastAccess("id", session.user.user_metadata.user_name, "students");
-                updateDuration("course_id", "course", course.courseId, 1);
+                updateDuration("course_id", "course", course.courseId);
                 updateLastAccess("course_id", course.courseId, "course");
-                updateCalendarDuration(formatDate(new Date()), session.user.user_metadata.user_name);
+                updateCalendarDuration(formatDate(new Date()), session.user.user_metadata.user_name, course.courseId);
             }
         } catch (error: any) {
-            console.log(`TutorStore Error: ${error.message}`);
+            console.error(`TutorStore Error: ${error.message}`);
         }
     },
 
     async updateLogin(courseId: string, session: any) {
         try {
-            const student = await getStudents(session.user.user_metadata.user_name);
-            student ? supabaseUpdateStudent(session.user) : supabaseAddStudent(session.user);
+            await addOrUpdateStudent(session.user);
         } catch (error: any) {
             console.log(`TutorStore Error: ${error.message}`);
         }

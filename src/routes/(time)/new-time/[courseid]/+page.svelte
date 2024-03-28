@@ -15,6 +15,8 @@
   import NewInstructorCalendarTime from "$lib/ui/time/new-time/NewInstructorCalendarTime.svelte";
   import NewInstructorLabTime from "$lib/ui/time/new-time/NewInstructorLabTime.svelte"; 
   import BoxPlotInstructorChart from "$lib/ui/time/new-time/BoxPlotInstructorChart.svelte";
+  import Error from '../Error.svelte';
+  export let error: string | null = null;
 
   export let data: any;
 
@@ -116,3 +118,7 @@
     <BoxPlotInstructorChart userMap={data.enrolledUsers} allLabs={data.allLabs} chart={true} />
   {/if}
 </div>
+
+{#if error}
+<Error message={error} />
+{/if}

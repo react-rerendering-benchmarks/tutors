@@ -24,7 +24,7 @@ type EChartsOption = echarts.ComposeOption<
 >;
 
 var option: EChartsOption;
-let listOfLabs: any[] = [];
+let listOfTopics: any[] = [];
 let user: UserMetric;
 
 export class TopicCountSheet {
@@ -33,12 +33,6 @@ export class TopicCountSheet {
     constructor() {
         this.myChart = null; 
 
-    }
-
-    populateCols(los: Lo[]) {
-        los.forEach((lab) => {
-            listOfLabs.push(lab.title);
-        });
     }
 
     populateUserData(userData: UserMetric) {

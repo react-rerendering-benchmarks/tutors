@@ -1,3 +1,4 @@
+
 import type { PageLoad } from "./$types";
 import { courseService } from "$lib/services/course";
 import { fetchAllStudents, fetchStudentById } from "$lib/services/utils/metrics";
@@ -13,7 +14,7 @@ const isStringArray = (test: any[]): boolean => {
 
 export const load: PageLoad = async ({ parent, params, fetch }) => {
   const data = await parent();
-
+  try{
   if (data.session) {
     const course: Course = await courseService.readCourse(params.courseid, fetch);
     const allLabs = course.wallMap?.get("lab");
@@ -52,4 +53,10 @@ export const load: PageLoad = async ({ parent, params, fetch }) => {
       enrolledUsers
     };
   }
+}catch(e: any){
+  return {error: e.message}
+}
+
 };
+
+

@@ -169,16 +169,20 @@ export function formatDate(date: Date): string {
 /*****Supabase ********/
 export async function fetchStudentById(courseUrl: string, session: any, allLabs, allTopics) {
   let user = null;
-  try {
-    const courseBase = courseUrl.substr(0, courseUrl.indexOf("."));
+  const courseBase = courseUrl.substring(0, courseUrl.indexOf("."));
     const { data: student, error: studentError } = await db.rpc('fetch_course_overview_for_student', {
       user_name: session.user.user_metadata.user_name,
       course_base: courseBase
     });
 
-    user = student;
+    if (studentError) {
+      throw studentError;
+    }
+
+    user = student[0];
+
     await updateStudentMetrics(courseBase, user);
-    populateStudentCalendar(user);
+    populateStudentCalendar(courseBase, user);
     if (allLabs) {
       populateDetailedLabInfo(courseBase, user);
       populateStudentsLabUsage(user, allLabs);
@@ -187,61 +191,57 @@ export async function fetchStudentById(courseUrl: string, session: any, allLabs,
     if (allTopics) {
       await populateTopics(courseBase, user);
       await updateStudentMetricsTopicData(courseBase, user);
-    }
-    user.metric.metrics.forEach(item1 => {
-      allTopics.forEach(item2 => {
-        if (item2.route.includes(item1.route)) {
-          item1.title = item2.title;
-        }
+
+      user.metric.metrics.forEach(item1 => {
+        allTopics.forEach(item2 => {
+          if (item2.route.includes(item1.route)) {
+            item1.title = item2.title;
+          }
+        });
       });
-    });
-    populateStudentsTopicUsage(user, allTopics);
-    updateUserObject(user, student);
-  } catch (error) {
-    console.error('Error fetching data:', error);
-  }
-  return user;
+      populateStudentsTopicUsage(user, allTopics);
+    }
+    return user;
 };
 
-export async function fetchAllStudents(courseUrl: string, allLabs, allTopics): Promise<Map<string, UserMetric>>  {
+export async function fetchAllStudents(courseUrl: string, allLabs, allTopics): Promise<Map<string, UserMetric>> {
   let user = null;
   const users = new Map<string, UserMetric>();
   try {
-    const courseBase = courseUrl.substr(0, courseUrl.indexOf("."));
+    const courseBase = courseUrl.substring(0, courseUrl.indexOf("."));
     const { data: students, error: studentsError } = await db.rpc('fetch_course_overview_for_students', {
       course_base: courseBase
     });
 
-    if(studentsError){
+    if (studentsError) {
       throw studentsError;
     }
 
-    for(const student of students) {
+    for (const student of students) {
 
-    user = student;
-    await updateStudentMetricsv2(courseBase, user);
-    populateStudentCalendarv2(user);
-    if (allLabs) {
-      populateDetailedLabInfo(courseBase, user);
-      populateStudentsLabUsage(user, allLabs);
-    }
+      user = student;
+      await updateStudentMetrics(courseBase, user);
+      populateStudentCalendar(courseBase, user);
+      if (allLabs) {
+        populateDetailedLabInfo(courseBase, user);
+        populateStudentsLabUsage(user, allLabs);
+      }
 
-    if (allTopics) {
-      await populateTopicsv2(courseBase, user);
-      await updateStudentMetricsTopicDatav2(courseBase, user);
-    }
-    user.metric.metrics.forEach(item1 => {
-      allTopics.forEach(item2 => {
-        if (item2.route.includes(item1.route)) {
-          item1.title = item2.title;
-        }
+      if (allTopics) {
+        await populateTopics(courseBase, user);
+        await updateStudentMetricsTopicData(courseBase, user);
+      }
+      user.metric.metrics.forEach(item1 => {
+        allTopics.forEach(item2 => {
+          if (item2.route.includes(item1.route)) {
+            item1.title = item2.title;
+          }
+        });
       });
-    });
-    populateStudentsTopicUsage(user, allTopics);
-    // updateUserObject(user, student);
-    users.set(user.nickname, user);
+      populateStudentsTopicUsage(user, allTopics);
+      users.set(user.nickname, user);
 
-  }
+    }
   } catch (error) {
     console.error('Error fetching data:', error);
   }
@@ -249,30 +249,6 @@ export async function fetchAllStudents(courseUrl: string, allLabs, allTopics): P
 };
 
 async function updateStudentMetrics(courseBase: string, user: any) {
-  const { data: metrics, error: metricsError } = await db.rpc('get_lab_data', {
-    user_name: user[0].nickname,
-    course_base: courseBase
-  });
-
-  if (metricsError) {
-    throw metricsError;
-  }
-
-  user.metric = {
-    id: 'lab',
-    metrics: []
-  };
-
-  metrics.forEach((m) => {
-    const metricObject: { [key: string]: number | string | undefined } = {};
-    metricObject['route'] = m.lochild ? removeTrailingSlash(m.lochild) : undefined;
-    metricObject['count'] = m.total_duration;
-
-    user.metric.metrics.push(metricObject);
-  });
-}
-
-async function updateStudentMetricsv2(courseBase: string, user: any) {
   const { data: metrics, error: metricsError } = await db.rpc('get_lab_data', {
     user_name: user.nickname,
     course_base: courseBase
@@ -298,30 +274,6 @@ async function updateStudentMetricsv2(courseBase: string, user: any) {
 
 async function updateStudentMetricsTopicData(courseBase: string, user: any) {
   const { data: metrics, error: metricsError } = await db.rpc('get_topic_data', {
-    user_name: user[0].nickname,
-    course_base: courseBase
-  });
-
-  if (metricsError) {
-    throw metricsError;
-  }
-
-  user.metric = {
-    id: 'topic',
-    metrics: []
-  };
-
-  metrics.forEach((m) => {
-    const metricObject: { [key: string]: number | string | undefined } = {};
-    metricObject['route'] = m.loparent ? removeTrailingSlash(m.loparent) : undefined;
-    metricObject['count'] = m.total_duration;
-
-    user.metric.metrics.push(metricObject);
-  });
-}
-
-async function updateStudentMetricsTopicDatav2(courseBase: string, user: any) {
-  const { data: metrics, error: metricsError } = await db.rpc('get_topic_data', {
     user_name: user.nickname,
     course_base: courseBase
   });
@@ -344,34 +296,9 @@ async function updateStudentMetricsTopicDatav2(courseBase: string, user: any) {
   });
 }
 
-function updateUserObject(user: UserMetric, data: any) {
-  user.name = data[0].name;
-  user.email = data[0].email;
-  user.picture = data[0].picture;
-  user.title = data[0].title;
-  user.onlinestatus = data[0].onlinestatus;
-  user.nickname = data[0].nickname;
-}
-
-async function populateStudentCalendar(user: UserMetric) {
+async function populateStudentCalendar(courseId: string, user: UserMetric) {
   user.calendarActivity = [];
-  let data = await getAllCalendarData(user[0].nickname)
-  if (data) {
-    data.forEach(item => {
-      const calendarId = item.id;
-      const dayMeasure: DayMeasure = {
-        date: calendarId,
-        dateObj: Date.parse(calendarId),
-        metric: item.duration,
-      };
-      user.calendarActivity.push(dayMeasure);
-    });
-  }
-}
-
-async function populateStudentCalendarv2(user: UserMetric) {
-  user.calendarActivity = [];
-  let data = await getAllCalendarData(user.nickname)
+  let data = await getAllCalendarData(courseId, user.nickname)
   if (data) {
     data.forEach(item => {
       const calendarId = item.id;
@@ -386,17 +313,6 @@ async function populateStudentCalendarv2(user: UserMetric) {
 }
 
 async function populateStudentsLabUsage(user: UserMetric, allLabs: Lo[]) {
-  user.labActivity = [];
-  for (const lab of allLabs) {
-    const labActivity = findInStudent(lab.route, user);
-    if (labActivity !== null) {
-      labActivity.title = lab.title;
-      user.labActivity.push(labActivity);
-    }
-  }
-}
-
-async function populateStudentsLabUsagev2(user: UserMetric, allLabs: Lo[]) {
   user.labActivity = [];
   for (const lab of allLabs) {
     const labActivity = findInStudent(lab.route, user);
@@ -455,7 +371,7 @@ function removeTrailingSlash(str: string): string {
 
 async function populateTopics(courseBase: string, user: UserMetric) {
   const { data: topics, error: topicsError } = await db.rpc('get_topic_metrics_for_student', {
-    user_name: user[0].nickname,
+    user_name: user.nickname,
     course_base: courseBase
   });
 
@@ -481,7 +397,7 @@ async function populateTopicsv2(courseBase: string, user: UserMetric) {
 
 async function populateDetailedLabInfo(courseBase: string, user: UserMetric) {
   const { data: detailedLabInfo, error: detailedLabInfoError } = await db.rpc('get_lab_usage', {
-    user_name: user[0].nickname,
+    user_name: user.nickname,
     course_base: courseBase
   });
 
@@ -490,6 +406,5 @@ async function populateDetailedLabInfo(courseBase: string, user: UserMetric) {
   }
 
   user.detailedLabInfo = detailedLabInfo;
-
 }
 

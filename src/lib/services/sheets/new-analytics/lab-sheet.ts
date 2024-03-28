@@ -109,7 +109,7 @@ export class LabSheet {
 
   renderChart(container, yAxisData, series) {
     const chartInstance = echarts.init(container);
-    const option = {
+     option = {
       tooltip: {
         position: 'top'
       },

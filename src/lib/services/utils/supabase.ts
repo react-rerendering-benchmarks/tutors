@@ -4,31 +4,39 @@ import { supabaseCourses, supabaseStudents } from "$lib/stores";
 import type { User } from "@supabase/supabase-js";
 import { formatDate } from "./metrics";
 
-export const getNumOfStudentCourseLoDuration = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
-    const { data, error } = await db
+export async function getNumOfStudentCourseLoDuration(courseId: string, studentId: string, loId: string) {
+    let query = db
         .from('studentsinteraction')
         .select('duration')
         .eq('student_id', studentId)
-        .eq('course_id', courseId)
-        .eq('lo_id', loId)
-        .single();
+        .eq('course_id', courseId);
+
+    if (loId) {
+        query = query.eq('lo_id', loId);
+    }
+
+    const { data, error } = await query.single();
 
     const num = data?.duration || 0;
-    const newCount = num + incrementBy;
+    const newCount = num + 1;
     return newCount;
 };
 
-export const getNumOfStudentCourseLoCount = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
-    const { data, error } = await db
+export async function getNumOfStudentCourseLoCount(courseId: string, studentId: string, loId: string) {
+    let query = db
         .from('studentsinteraction')
         .select('count')
         .eq('student_id', studentId)
-        .eq('course_id', courseId)
-        .eq('lo_id', loId)
-        .single();
+        .eq('course_id', courseId);
 
-    const num = data?.count|| 0;
-    const newCount = num + incrementBy;
+    if (loId) {
+        query = query.eq('lo_id', loId);
+    }
+
+    const { data, error } = await query.single();
+
+    const num = data?.count || 0;
+    const newCount = num + 1;
     return newCount;
 };
 
@@ -45,41 +53,31 @@ export async function readValue(key: string): Promise<any> {
     return data;
 };
 
-export async function getAllCalendarData(studentId: string): Promise<any> {
-    const { data, error } = await db.from('calendar').select().eq('student_id', studentId);
+export async function getAllCalendarData(courseId: string, studentId: string): Promise<any> {
+    const { data, error } = await db.from('calendar').select().eq('student_id', studentId).eq('course_id', courseId);
     return data;
 };
 
-export async function getCalendarData(id: string, studentId: string): Promise<any> {
-    const { data, error } = await db.from('calendar').select().eq('id', formatDate(new Date())).eq('student_id', studentId);
+export async function getCalendarData(id: string, studentId: string, courseId: string): Promise<any> {
+    const { data, error } = await db.from('calendar').select().eq('id', formatDate(new Date())).eq('student_id', studentId).eq('course_id', courseId);
     return data;
 };
 
-export async function insertOrUpdateCalendar(studentId: string) {
-    const returnedData = await getCalendarData(formatDate(new Date()), studentId)
-    if (returnedData === undefined || returnedData.length === 0) {
-        await db
-            .from('calendar')
-            .insert({
-                id: formatDate(new Date()),
-                student_id: studentId,
-                duration: 1,
-                count: 1,
-            });
-    } else {
-        const durationPromise = getCalendarDurationTotal(formatDate(new Date()), studentId);
-        const countPromise = getCalendarCountTotal(formatDate(new Date()), studentId);
-        const [duration, count] = await Promise.all([durationPromise, countPromise]);
-        await db
-            .from('calendar')
-            .update({
-                duration: duration,
-                count: count,
-            })
-            .eq('id', formatDate(new Date()))
-            .eq('student_id', studentId);
-
-    }
+export async function insertOrUpdateCalendar(studentId: string, courseId: string) {
+    const durationPromise = getCalendarDurationTotal(formatDate(new Date()), studentId, courseId);
+    const countPromise = getCalendarCountTotal(formatDate(new Date()), studentId, courseId);
+    const [duration, count] = await Promise.all([durationPromise, countPromise]);
+    await db
+        .from('calendar')
+        .upsert({
+            id: formatDate(new Date()),
+            student_id: studentId,
+            duration: duration,
+            count: count,
+            course_id: courseId
+        }, {
+            onConflict: 'id, student_id, course_id'
+        });
 };
 
 export const loadCourses = async () => {
@@ -112,8 +110,8 @@ export async function addCourse(course: Course) {
 };
 
 export async function updateCourse(course: Course) {
-    const durationPromise = getDurationTotal("course_id", "course", course.courseId, 1);
-    const countPromise = getCountTotal("course_id", "course", course.courseId, 1);
+    const durationPromise = getDurationTotal("course_id", "course", course.courseId);
+    const countPromise = getCountTotal("course_id", "course", course.courseId);
     const [duration, count] = await Promise.all([durationPromise, countPromise]);
     await db
         .from('course')
@@ -125,20 +123,44 @@ export async function updateCourse(course: Course) {
         .eq('course_id', course.courseId);
 };
 
+export async function insertOrUpdateCourse(course: Course) {
+    const durationPromise = getDurationTotal("course_id", "course", course.courseId);
+    const countPromise = getCountTotal("course_id", "course", course.courseId);
+    const [duration, count] = await Promise.all([durationPromise, countPromise]);
+    await db
+        .from('course')
+        .upsert({
+            course_id: course.courseId,
+            title: course.title,
+            duration: duration,
+            count: count,
+            date_last_accessed: new Date().toISOString(),
+            img: course.img,
+            icon: course.icon
+        }, {
+            onConflict: 'course_id'
+        });
+};
+
 export async function getStudentCoursesLearningObjects(courseId: string, studentId: string, loId: string): Promise<any> {
-    if (!courseId || !studentId || !loId) {
-        console.error("Missing required parameters: courseId and studentId must be provided.");
-        return null; 
+    if (!courseId || !studentId) {
+        throw new Error("Missing required parameters: courseId and studentId must be provided.");
     }
 
-    const { data, error } = await db
+    let query = db
         .from('studentsinteraction')
         .select()
         .eq('course_id', courseId)
-        .eq('student_id', studentId)
-        .eq('lo_id', loId);
+        .eq('student_id', studentId);
+
+    if (loId) {
+        query = query.eq('lo_id', loId);
+    }
+    const { data, error } = await query.single();
+
     if (error) {
-        console.error('Error fetching studentsinteraction:', error);
+        console.error(error);
+        return null;
     }
     return data;
 };
@@ -154,41 +176,29 @@ export async function getStudents(studentId: string): Promise<any> {
     return data;
 };
 
-export async function supabaseAddStudent(userDetails: User) {
-    const { data} = await db
-        .from('students')
-        .insert({
-            id: userDetails.user_metadata.user_name,
-            avatar: userDetails.user_metadata.avatar_url,
-            full_name: userDetails.user_metadata.full_name,
-            email: userDetails.user_metadata.email || "",
-            duration: 1,
-            date_last_accessed: new Date().toISOString(),
-            count: 1,
-        });
-
-    if (data) {
-        supabaseStudents.update(cur => [...cur, data[0]]);
-    }
-};
-
-export async function supabaseUpdateStudent(userDetails: User) {
-    const durationPromise = getDurationTotal("id", "students", userDetails.user_metadata.user_name, 1);
-    const countPromise = getCountTotal("id", "students", userDetails.user_metadata.user_name, 1);
+export async function addOrUpdateStudent(userDetails: User) {
+    const durationPromise = getDurationTotal("id", "students", userDetails.user_metadata.user_name);
+    const countPromise = getCountTotal("id", "students", userDetails.user_metadata.user_name);
     const [duration, count] = await Promise.all([durationPromise, countPromise]);
     const { data, error } = await db
         .from('students')
-        .update({
+        .upsert({
+            id: userDetails.user_metadata.user_name,
             avatar: userDetails.user_metadata.avatar_url,
             full_name: userDetails.user_metadata.full_name,
             email: userDetails.user_metadata.email || "",
             duration: duration,
             date_last_accessed: new Date().toISOString(),
             count: count,
-        })
-        .eq('id', userDetails.user_metadata.user_name);
+        }, {
+            onConflict: 'id'
+        });
 
-    if (data) supabaseStudents.update(cur => [...cur, data[0]]);
+        if(error) throw error;
+
+    if (data) {
+        supabaseStudents.update(cur => [...cur, data[0]]);
+    }
 };
 
 export async function insertStudentCourseLoTable(courseId: string, studentId: string, loId: string): Promise<any> {
@@ -204,23 +214,7 @@ export async function insertStudentCourseLoTable(courseId: string, studentId: st
         });
 };
 
-export async function updateStudentCourseLoTable(courseId: string, studentId: string, loId: string): Promise<any> {
-    const durationPromise = getNumOfStudentCourseLoDuration(courseId, studentId, loId, 1);
-    const countPromise = getNumOfStudentCourseLoCount(courseId, studentId, loId, 1);
-    const [duration, count] = await Promise.all([durationPromise, countPromise]);
-    await db
-        .from('studentsinteraction')
-        .update({
-            duration: duration,
-            date_last_accessed: new Date().toISOString(),
-            count: count,
-        })
-        .eq('student_id', studentId)
-        .eq('course_id', courseId)
-        .eq('lo_id', loId);
-};
-
-export const updateLastAccess = async (key: string, id: string, table: any): Promise<any> => {
+export async function updateLastAccess(key: string, id: string, table: any): Promise<any> {
     const { error: updateError } = await db
         .from(table)
         .update({ date_last_accessed: new Date().toISOString() })
@@ -231,10 +225,11 @@ export const updateLastAccess = async (key: string, id: string, table: any): Pro
     }
 };
 
-export async function addLo(loid: string, currentLo: Lo, loTitle: string) {
+export async function addOrUpdateLo(loid: string, currentLo: Lo, loTitle: string) {
+    if(!loid) return;
     const { error } = await db
         .from('learningobject')
-        .insert({
+        .upsert({
             id: loid,
             type: currentLo.type,
             name: loTitle,
@@ -245,23 +240,17 @@ export async function addLo(loid: string, currentLo: Lo, loTitle: string) {
             icon: currentLo.icon,
             topic_title: currentLo.parentTopic ? currentLo.parentTopic.title : null,
             lab_title: currentLo.type === 'lab' ? currentLo.title : null,
-
+        }, {
+            onConflict: 'id'
         });
+
+        if(error) throw error;
 };
 
-export async function updateLo(loid: string, currentLo: Lo) {
-    await db
-        .from('learningobject')
-        .update({
-            date_last_accessed: new Date().toISOString(),
-        })
-        .eq('id', loid);
-};
-
-export const updateStudentCourseLoInteractionDuration = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
-    const numOfDuration = await getNumOfStudentCourseLoDuration(courseId, studentId, loId, incrementBy);
+export async function updateStudentCourseLoInteractionDuration(courseId: string, studentId: string, loId: string) {
+    const numOfDuration = await getNumOfStudentCourseLoDuration(courseId, studentId, loId);
     const num = numOfDuration || 0;
-    const newCount = num + incrementBy;
+    const newCount = num + 1;
 
     await db
         .from('studentsinteraction')
@@ -271,10 +260,10 @@ export const updateStudentCourseLoInteractionDuration = async (courseId: string,
         .eq('lo_id', loId);
 };
 
-export const updateStudentCourseLoInteractionCount = async (courseId: string, studentId: string, loId: string, incrementBy: number) => {
-    const numOfCount = await getNumOfStudentCourseLoCount(courseId, studentId, loId, incrementBy);
+export async function updateStudentCourseLoInteractionCount(courseId: string, studentId: string, loId: string) {
+    const numOfCount = await getNumOfStudentCourseLoCount(courseId, studentId, loId);
     let num = numOfCount?.count || 0;
-    const newCount = num + incrementBy;
+    const newCount = num + 1;
 
     await db
         .from('studentsinteraction')
@@ -284,7 +273,7 @@ export const updateStudentCourseLoInteractionCount = async (courseId: string, st
         .eq('lo_id', loId);
 };
 
-export const getDurationTotal = async (key: string, table: string, id: string, incrementBy: number) => {
+export async function getDurationTotal(key: string, table: string, id: string) {
     const { data, error } = await db
         .from(table)
         .select('duration')
@@ -297,11 +286,11 @@ export const getDurationTotal = async (key: string, table: string, id: string, i
     }
 
     const num = data?.duration || 0;
-    const newCount = num + incrementBy;
+    const newCount = num + 1;
     return newCount;
 };
 
-export const getCountTotal = async (key: string, table: string, id: string, incrementBy: number) => {
+export async function getCountTotal(key: string, table: string, id: string): Promise<number> {
     const { data, error } = await db
         .from(table)
         .select('count')
@@ -310,25 +299,26 @@ export const getCountTotal = async (key: string, table: string, id: string, incr
 
     if (data === null || data === undefined) {
         console.warn(`No data found for ${table} with ${key} ${id}`);
-        return null;
+        return 0;
     }
 
     const num = data?.count || 0;
-    const newCount = num + incrementBy;
+    const newCount = num + 1;
     return newCount;
 };
 
-export const getCalendarDurationTotal = async (id: string, studentId: string) => {
+export async function getCalendarDurationTotal(id: string, studentId: string, courseId: string): Promise<number> {
     const { data, error } = await db
         .from('calendar')
         .select('duration')
         .eq('id', id)
         .eq('student_id', studentId)
+        .eq('course_id', courseId)
         .single();
 
     if (data === null || data === undefined) {
         console.warn(`No data found for the calendar with ${id} ${studentId}`);
-        return null;
+        return 0;
     }
 
     const num = data?.duration || 0;
@@ -336,17 +326,18 @@ export const getCalendarDurationTotal = async (id: string, studentId: string) =>
     return newCount;
 };
 
-export const getCalendarCountTotal = async (id: string, studentId: string) => {
+export async function getCalendarCountTotal(id: string, studentId: string, courseId: string): Promise<number> {
     const { data, error } = await db
         .from('calendar')
         .select('count')
         .eq('id', id)
         .eq('student_id', studentId)
+        .eq('course_id', courseId)
         .single();
 
     if (data === null || data === undefined) {
         console.warn(`No data found for the calendar with ${id} ${studentId}`);
-        return null;
+        return 0;
     }
 
     const num = data?.count || 0;
@@ -354,7 +345,7 @@ export const getCalendarCountTotal = async (id: string, studentId: string) => {
     return newCount;
 };
 
-export const updateCount= async (key: string, table: string, id: string, incrementBy: number) => {
+export async function updateCount(key: string, table: string, id: string) {
     const { data, error } = await db
         .from(table)
         .select('count')
@@ -362,7 +353,7 @@ export const updateCount= async (key: string, table: string, id: string, increme
         .single();
 
     const num = data?.count || 0;
-    const newCount = num + incrementBy;
+    const newCount = num + 1;
 
     await db
         .from(table)
@@ -370,27 +361,28 @@ export const updateCount= async (key: string, table: string, id: string, increme
         .eq(key, id);
 };
 
-export const updateDuration = async (key: string, table: string, id: string, incrementBy: number) => {
+export async function updateDuration(key: string, table: string, id: string) {
     const { data, error } = await db
         .from(table)
         .select('duration')
         .eq(key, id)
         .single();
 
-    const num = data?.duration|| 0;
-    const newCount = num + incrementBy;
+    const num = data?.duration || 0;
+    const newCount = num + 1;
     await db
         .from(table)
         .update({ 'duration': newCount })
         .eq(key, id);
 };
 
-export const updateCalendarCount= async (id: string, studentId: string) => {
+export const updateCalendarCount = async (id: string, studentId: string, courseId: string) => {
     const { data, error } = await db
         .from('calendar')
         .select('count')
         .eq('id', id)
         .eq('student_id', studentId)
+        .eq('course_id', courseId)
         .single();
 
     const num = data?.count || 0;
@@ -400,87 +392,93 @@ export const updateCalendarCount= async (id: string, studentId: string) => {
         .from('calendar')
         .update({ 'count': newCount })
         .eq('id', id)
-        .eq('student_id', studentId);
+        .eq('student_id', studentId)
+        .eq('course_id', courseId);
 };
 
-export const updateCalendarDuration = async (id: string, studentId: string) => {
+export const updateCalendarDuration = async (id: string, studentId: string, courseId: string) => {
     const { data, error } = await db
         .from('calendar')
         .select('duration')
         .eq('id', id)
         .eq('student_id', studentId)
+        .eq('course_id', courseId)
         .single();
 
-    const num = data?.duration|| 0;
+    const num = data?.duration || 0;
     const newCount = num + 1;
     await db
         .from('calendar')
         .update({ 'duration': newCount })
         .eq('id', id)
-        .eq('student_id', studentId);
+        .eq('student_id', studentId)
+        .eq('course_id', courseId);
 };
 
-
-export async function insertOrUpdateLoEvent(loid: string, currentLo: Lo, loTitle: string) {
-    const { data, error } = await db.from('learningobject').select().eq('id', loid);
-    if (data === null || data.length === 0) {
-        await addLo(loid, currentLo, loTitle);
-    } else {
-        await updateLo(loid, currentLo);
-    }
-};
-
-export async function insertOrUpdateStudent(userDetails: User) {
-    if (userDetails.user_metadata.full_name === "Anon") return;
-    const returnedStudent = await getStudents(userDetails.user_metadata.user_name);
-
-    if (returnedStudent === undefined || returnedStudent.length === 0) {
-        await supabaseAddStudent(userDetails);
-    } else {
-        await supabaseUpdateStudent(userDetails)
-    }
-};
-
-export async function storeStudentCourseLearningObjectInSupabase(course: Course, params: any, loid:string, lo: Lo, userDetails: User) {
-    let loTitle: string = "";
-    loTitle = getLoTitle(params)
+export async function storeStudentCourseLearningObjectInSupabase(course: Course, params: any, loid: string, lo: Lo, userDetails: User) {
+    const loTitle = getLoTitle(params)
     if (userDetails?.user_metadata.full_name === "Anon") return;
     await insertOrUpdateCourse(course);
-    await insertOrUpdateStudent(userDetails);
-    await insertOrUpdateLoEvent(loid, lo, loTitle);
-    await handleInteractionData(course,loid, lo, userDetails);
-    await insertOrUpdateCalendar(userDetails.user_metadata.user_name);
+    await addOrUpdateStudent(userDetails);
+    await addOrUpdateLo(loid, lo, loTitle);
+    await handleInteractionData(course.courseId, userDetails.user_metadata.user_name, loid);
+    await insertOrUpdateCalendar(userDetails.user_metadata.user_name, course.courseId);
 };
 
-export async function handleInteractionData(course: Course,loid: string, lo: Lo, userDetails: User) {
-    const getInteractionData = await getStudentCoursesLearningObjects(course.courseId, userDetails.user_metadata.user_name, loid);
-
-    if (getInteractionData === null && loid !== null  || getInteractionData.length === 0) {
-        await insertStudentCourseLoTable(course.courseId, userDetails.user_metadata.user_name, loid);
+export async function handleInteractionData(courseId: string, studentId: string, loId: string) {
+    const interactionInfo = await getStudentCoursesLearningObjects(courseId, studentId, loId)
+    if (interactionInfo.length === 0 || interactionInfo === null) {
+        await addStudentCourseInteraction(courseId, studentId, loId);
     } else {
-        await updateStudentCourseLoTable(course.courseId, userDetails.user_metadata.user_name, loid);
+        await updateStudentCourseLoTable(courseId, studentId, loId);
     }
 };
 
-export async function insertOrUpdateCourse(course: any) {
-        const returnedCourses = await getCourses(course.courseId);
-        if (returnedCourses === null || returnedCourses.length === 0) {
-            await addCourse(course);
-        } else {
-            await updateCourse(course);
-        }
+export async function updateStudentCourseLoTable(courseId: string, studentId: string, loId: string) {
+    const durationPromise = getNumOfStudentCourseLoDuration(courseId, studentId, loId);
+    const countPromise = getNumOfStudentCourseLoCount(courseId, studentId, loId);
+    const [duration, count] = await Promise.all([durationPromise, countPromise]);
+
+    let query = db.from('studentsinteraction')
+        .update({
+            duration: duration,
+            date_last_accessed: new Date().toISOString(),
+            count: count,
+        })
+        .eq('student_id', studentId)
+        .eq('course_id', courseId);
+
+    if (loId) {
+        query = query.eq('lo_id', loId);
+    }
+
+    const { data, error } = await query.single();
+};
+
+export async function addStudentCourseInteraction(courseId: string, studentId: string, loId: string) {
+    await db
+        .from('studentsinteraction')
+        .insert({
+            student_id: studentId,
+            course_id: courseId,
+            lo_id: loId,
+            duration: 1,
+            date_last_accessed: new Date().toISOString(),
+            count: 1,
+        });
+
 };
 
 export function getLoTitle(params: any): string | undefined {
     if (params.lab || params.lab?.currentChapterTitle !== undefined) {
         return params.lab.currentChapterTitle;
     } else if (params.lo || params.lo?.title !== undefined) {
-        return params.lo.title 
+        return params.lo.title
     } else if (params.lo || params.lo?.id !== undefined) {
-        return params.lo.id 
+        return params.lo.id
     } else if (params.topic || params.topic?.title !== undefined) {
         return params.topic.title;
-    } else{
+    } else {
         return undefined;
     }
 };

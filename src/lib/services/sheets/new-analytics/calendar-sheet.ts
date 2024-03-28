@@ -58,8 +58,6 @@ export class CalendarSheet {
     createChartContainer(containerId: string) {
         const container = document.createElement('div');
         container.id = `chart-${containerId}`;
-       // container.style.width = '600px';  // Set desired width
-        //container.style.height = '600px'; // Set desired height
         document.body.appendChild(container);  // Append the container to the body or a specific parent element
     }
 
