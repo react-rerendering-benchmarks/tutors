@@ -22,7 +22,7 @@ currentLo.subscribe((current) => {
   lo = current;
 });
 
-export const analyticsService = {
+export const firebaseAnalyticsService = {
   loRoute: "",
 
   learningEvent(params: Record<string, string>, session: TokenResponse) {

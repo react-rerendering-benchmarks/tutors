@@ -76,7 +76,7 @@ export class LabSheet {
       user: user.name, //this.formatName(user.name, user.email),
       summary: 0,
       date: user.last,
-      github: user.nickname
+      github: user?.nickname
     };
     return row;
   }

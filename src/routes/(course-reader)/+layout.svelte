@@ -8,8 +8,8 @@
   import { setInitialClassState } from "@skeletonlabs/skeleton";
   import { onlineStatus, storeTheme, transitionKey, currentLo, currentCourse } from "$lib/stores";
   import { getKeys } from "$lib/environment";
-  //import { analyticsService } from "$lib/services/firebaseAnalytics";
-  import { analyticsService } from "$lib/services/supabaseAnalytics";  
+  import { firebaseAnalyticsService } from "$lib/services/firebaseAnalytics";
+  import { supabaseAnalyticsService } from "$lib/services/supabaseAnalytics";  
   import CourseShell from "$lib/ui/app-shells/CourseShell.svelte";
   import { initFirebase } from "$lib/services/utils/firebase";
   import { PUBLIC_SUPABASE_URL } from "$env/static/public";
@@ -30,7 +30,8 @@
   function updatePageCount() {
     if (!document.hidden && !currentRoute.startsWith("/live") && !currentRoute.startsWith("/dashboard")) {
       if (PUBLIC_SUPABASE_URL !== "XXX") {
-        analyticsService.updatePageCount(session);
+        supabaseAnalyticsService.updatePageCount(session);
+        firebaseAnalyticsService.updatePageCount(session);
       }
     }
   }
@@ -60,8 +61,8 @@
       currentRoute = path.route.id;
     }
     if (path.params.courseid && getKeys().firebase.apiKey !== "XXX" && !$currentCourse.isPrivate) {
-     //analyticsService.learningEvent(path.params, session); //for firebase
-     analyticsService.learningEvent(path, session); //for supabase
+     firebaseAnalyticsService.learningEvent(path.params, session); //for firebase
+     supabaseAnalyticsService.learningEvent(path, session); //for supabase
 
     }
     if (path.url.hash && !path.url.hash.startsWith("#access_token")) {

@@ -21,7 +21,7 @@ currentLo.subscribe((current) => {
     lo = current;
 });
 
-export const analyticsService = {
+export const supabaseAnalyticsService = {
     learningEvent(params: any, session: TokenResponse) {
         try {
             loid = params?.params?.loid;
@@ -62,10 +62,10 @@ export const analyticsService = {
         }
     },
 
-    updatePageCount(session: TokenResponse) {
+    async updatePageCount(session: TokenResponse) {
         try {
             if (session?.user) {
-                updateStudentCourseLoInteractionDuration(course.courseId, session?.user.user_metadata.user_name, loid);
+                if(loid)updateStudentCourseLoInteractionDuration(course.courseId, session?.user.user_metadata.user_name, loid);
                 updateDuration("id", "students", session.user.user_metadata.user_name);
                 updateLastAccess("id", session.user.user_metadata.user_name, "students");
                 updateDuration("course_id", "course", course.courseId);

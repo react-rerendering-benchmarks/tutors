@@ -4,7 +4,6 @@
     import "ag-grid-enterprise";
     import type { UserMetric } from "$lib/services/types/metrics";
     import { AllActivityCountSheet } from "../../services/sheets/all-activity-count-sheet";
-    import { options } from "../../services/sheets/topic-sheet";
   
     export let chart = false;
     export let user: UserMetric;

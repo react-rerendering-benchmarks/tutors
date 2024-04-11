@@ -5,39 +5,40 @@ import type { User } from "@supabase/supabase-js";
 import { formatDate } from "./metrics";
 
 export async function getNumOfStudentCourseLoDuration(courseId: string, studentId: string, loId: string) {
-    let query = db
-        .from('studentsinteraction')
-        .select('duration')
-        .eq('student_id', studentId)
-        .eq('course_id', courseId);
-
-    if (loId) {
-        query = query.eq('lo_id', loId);
+    if (!courseId || !studentId || !loId) {
+        return 0;
     }
 
-    const { data, error } = await query.single();
+    const { data: student, error } = await db.rpc('get_duration_studentsinteraction', {
+        course_base: courseId,
+        user_name: studentId,
+        lo_key: loId
+    });
 
-    const num = data?.duration || 0;
-    const newCount = num + 1;
-    return newCount;
-};
+    if (error) {
+        console.error('Error fetching student interaction:', error);
+        return 0;
+    }
+
+    return student ? student[0].duration + 1 : 1;
+}
 
 export async function getNumOfStudentCourseLoCount(courseId: string, studentId: string, loId: string) {
-    let query = db
-        .from('studentsinteraction')
-        .select('count')
-        .eq('student_id', studentId)
-        .eq('course_id', courseId);
+    if (!courseId || !studentId || !loId) {
+        return 0;
+    }
+    const { data: student, error } = await db.rpc('get_count_studentsinteraction', {
+        course_base: courseId,
+        user_name: studentId,
+        lo_key: loId
+    });
 
-    if (loId) {
-        query = query.eq('lo_id', loId);
+    if (error) {
+        console.error('Error fetching student interaction:', error);
+        return 0;
     }
 
-    const { data, error } = await query.single();
-
-    const num = data?.count || 0;
-    const newCount = num + 1;
-    return newCount;
+    return student ? student[0].count + 1 : 1;
 };
 
 export async function updateStudentsStatus(key: string, str: string) {
@@ -143,26 +144,21 @@ export async function insertOrUpdateCourse(course: Course) {
 };
 
 export async function getStudentCoursesLearningObjects(courseId: string, studentId: string, loId: string): Promise<any> {
-    if (!courseId || !studentId) {
-        throw new Error("Missing required parameters: courseId and studentId must be provided.");
-    }
+    try {
+        const { data: student, error } = await db.rpc('get_studentsinteractions', {
+            course_base: courseId,
+            user_name: studentId,
+            lo_key: loId
+        });
 
-    let query = db
-        .from('studentsinteraction')
-        .select()
-        .eq('course_id', courseId)
-        .eq('student_id', studentId);
+        if (error) {
+            console.error('Error fetching student interaction:', error);
+        }
 
-    if (loId) {
-        query = query.eq('lo_id', loId);
+        return student ? student[0].duration + 1 : 1;
+    } catch (error) {
+        console.error('Database operation failed:', error);
     }
-    const { data, error } = await query.single();
-
-    if (error) {
-        console.error(error);
-        return null;
-    }
-    return data;
 };
 
 export async function getCourses(courseId: string): Promise<any> {
@@ -194,7 +190,7 @@ export async function addOrUpdateStudent(userDetails: User) {
             onConflict: 'id'
         });
 
-        if(error) throw error;
+    if (error) throw error;
 
     if (data) {
         supabaseStudents.update(cur => [...cur, data[0]]);
@@ -226,12 +222,12 @@ export async function updateLastAccess(key: string, id: string, table: any): Pro
 };
 
 export async function addOrUpdateLo(loid: string, currentLo: Lo, loTitle: string) {
-    if(!loid) return;
+    if (!loid) return;
     const { error } = await db
         .from('learningobject')
         .upsert({
             id: loid,
-            type: currentLo.type,
+            type: currentLo?.type,
             name: loTitle,
             date_last_accessed: new Date().toISOString(),
             parent: currentLo.parentLo ? currentLo.parentLo.route : null,
@@ -244,7 +240,7 @@ export async function addOrUpdateLo(loid: string, currentLo: Lo, loTitle: string
             onConflict: 'id'
         });
 
-        if(error) throw error;
+    if (error) throw error;
 };
 
 export async function updateStudentCourseLoInteractionDuration(courseId: string, studentId: string, loId: string) {
@@ -258,19 +254,7 @@ export async function updateStudentCourseLoInteractionDuration(courseId: string,
         .eq('student_id', studentId)
         .eq('course_id', courseId)
         .eq('lo_id', loId);
-};
 
-export async function updateStudentCourseLoInteractionCount(courseId: string, studentId: string, loId: string) {
-    const numOfCount = await getNumOfStudentCourseLoCount(courseId, studentId, loId);
-    let num = numOfCount?.count || 0;
-    const newCount = num + 1;
-
-    await db
-        .from('studentsinteraction')
-        .update({ 'count': newCount })
-        .eq('student_id', studentId)
-        .eq('course_id', courseId)
-        .eq('lo_id', loId);
 };
 
 export async function getDurationTotal(key: string, table: string, id: string) {
@@ -418,56 +402,50 @@ export const updateCalendarDuration = async (id: string, studentId: string, cour
 export async function storeStudentCourseLearningObjectInSupabase(course: Course, params: any, loid: string, lo: Lo, userDetails: User) {
     const loTitle = getLoTitle(params)
     if (userDetails?.user_metadata.full_name === "Anon") return;
-    await insertOrUpdateCourse(course);
-    await addOrUpdateStudent(userDetails);
-    await addOrUpdateLo(loid, lo, loTitle);
-    await handleInteractionData(course.courseId, userDetails.user_metadata.user_name, loid);
-    await insertOrUpdateCalendar(userDetails.user_metadata.user_name, course.courseId);
+        await insertOrUpdateCourse(course);
+        await addOrUpdateStudent(userDetails);
+        await addOrUpdateLo(loid, lo, loTitle);
+        await handleInteractionData(course.courseId, userDetails.user_metadata.user_name, loid);
+        await insertOrUpdateCalendar(userDetails.user_metadata.user_name, course.courseId);
 };
 
 export async function handleInteractionData(courseId: string, studentId: string, loId: string) {
-    const interactionInfo = await getStudentCoursesLearningObjects(courseId, studentId, loId)
-    if (interactionInfo?.length === 0 || interactionInfo === null) {
-        await addStudentCourseInteraction(courseId, studentId, loId);
-    } else {
-        await updateStudentCourseLoTable(courseId, studentId, loId);
-    }
+    if (!courseId || !studentId || !loId) return;
+    await manageStudentCourseLo(courseId, studentId, loId);
 };
 
-export async function updateStudentCourseLoTable(courseId: string, studentId: string, loId: string) {
+export function studentInteractionsUpdates(callback) {
+    db
+        .channel('schema-db-changes')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'calendar'
+        }, (payload) => {
+            callback(payload.new);
+        })
+        .subscribe();
+};
+
+export async function manageStudentCourseLo(courseId: string, studentId: string, loId: string) {
     const durationPromise = getNumOfStudentCourseLoDuration(courseId, studentId, loId);
     const countPromise = getNumOfStudentCourseLoCount(courseId, studentId, loId);
     const [duration, count] = await Promise.all([durationPromise, countPromise]);
-
-    let query = db.from('studentsinteraction')
-        .update({
-            duration: duration,
-            date_last_accessed: new Date().toISOString(),
-            count: count,
-        })
-        .eq('student_id', studentId)
-        .eq('course_id', courseId);
-
-    if (loId) {
-        query = query.eq('lo_id', loId);
-    }
-
-    const { data, error } = await query.single();
-};
-
-export async function addStudentCourseInteraction(courseId: string, studentId: string, loId: string) {
-    await db
+    const { error } = await db
         .from('studentsinteraction')
-        .insert({
-            student_id: studentId,
+        .upsert({
             course_id: courseId,
+            student_id: studentId,
             lo_id: loId,
-            duration: 1,
             date_last_accessed: new Date().toISOString(),
-            count: 1,
+            duration: duration,
+            count: count
+        }, {
+            onConflict: 'student_id, course_id, lo_id',
+            ignoreDuplicates: false
         });
-
-};
+    if (error) throw error;
+}
 
 export function getLoTitle(params: any): string | undefined {
     if (params.lab || params.lab?.currentChapterTitle !== undefined) {

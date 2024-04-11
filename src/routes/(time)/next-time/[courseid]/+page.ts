@@ -14,13 +14,12 @@ const isStringArray = (test: any[]): boolean => {
 
 export const load: PageLoad = async ({ parent, params, fetch }) => {
   const data = await parent();
-  try{
   if (data.session) {
     const course: Course = await courseService.readCourse(params.courseid, fetch);
     const allLabs = course.wallMap?.get("lab");
     const allTopics = course.los;
-    const user: UserMetric = await fetchStudentById(params.courseid, data.session, allLabs, allTopics);
-    const allLos = user.topics.map((topic) => topic.lo_title);
+    const user: UserMetric  = await fetchStudentById(params.courseid, data.session, allLabs, allTopics);
+    const allLos = user?.topics.map((topic) => topic.lo_title);
     const users: Map<string, UserMetric> = await fetchAllStudents(params.courseid, allLabs, allTopics);
     course.enrollment = Array.from(users.keys());
     const enrolledUsers: Map<string, UserMetric> = new Map<string, UserMetric>();
@@ -53,9 +52,6 @@ export const load: PageLoad = async ({ parent, params, fetch }) => {
       enrolledUsers
     };
   }
-}catch(e: any){
-  return {error: e.message}
-}
 
 };
 

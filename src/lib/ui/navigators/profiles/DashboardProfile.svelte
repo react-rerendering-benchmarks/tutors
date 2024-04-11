@@ -2,6 +2,7 @@
   import { popup } from "@skeletonlabs/skeleton";
   import DashboardProfileButton from "./DashboardProfileButton.svelte";
   import DashboardProfileMenu from "./DashboardProfileMenu.svelte";
+  import { currentCourse } from "$lib/stores";
   import type { Session } from "@supabase/supabase-js";
   export let session: Session;
   export let handleSignOut: () => void;
@@ -10,4 +11,4 @@
 <button use:popup={{ event: "click", target: "avatar" }}>
   <DashboardProfileButton {session} />
 </button>
-<DashboardProfileMenu {session} {handleSignOut} />
+<DashboardProfileMenu {session} {handleSignOut} currentCourseUrl={$currentCourse?.courseUrl}/>

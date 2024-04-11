@@ -167,7 +167,7 @@ export function formatDate(date: Date): string {
 }
 
 /*****Supabase ********/
-export async function fetchStudentById(courseUrl: string, session: any, allLabs, allTopics) {
+export async function fetchStudentById(courseUrl: string, session: any, allLabs, allTopics): Promise<UserMetric|null> {
   let user = null;
   const courseBase = courseUrl.substring(0, courseUrl.indexOf("."));
     const { data: student, error: studentError } = await db.rpc('fetch_course_overview_for_student', {
@@ -180,7 +180,7 @@ export async function fetchStudentById(courseUrl: string, session: any, allLabs,
     }
 
     user = student[0];
-
+if(user) {
     await updateStudentMetrics(courseBase, user);
     populateStudentCalendar(courseBase, user);
     if (allLabs) {
@@ -202,6 +202,10 @@ export async function fetchStudentById(courseUrl: string, session: any, allLabs,
       populateStudentsTopicUsage(user, allTopics);
     }
     return user;
+  }else{
+    return null;
+  }
+  
 };
 
 export async function fetchAllStudents(courseUrl: string, allLabs, allTopics): Promise<Map<string, UserMetric>> {

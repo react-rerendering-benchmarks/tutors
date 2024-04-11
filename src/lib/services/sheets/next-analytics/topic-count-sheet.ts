@@ -9,7 +9,8 @@ import { PieChart, type PieSeriesOption } from 'echarts/charts';
 import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer } from 'echarts/renderers';
 import type { UserMetric } from '$lib/services/types/metrics';
-import type { Lo } from '$lib/services/models/lo-types';
+import { backgroundPattern } from '../next-charts/next-charts-background-url';
+import type { Topic } from '$lib/services/models/lo-types';
 
 echarts.use([
     TooltipComponent,
@@ -27,12 +28,23 @@ var option: EChartsOption;
 let listOfTopics: any[] = [];
 let user: UserMetric;
 
+const bgPatternSrc = backgroundPattern;
+
+const bgPatternImg = new Image();
+bgPatternImg.src = bgPatternSrc;
+
 export class TopicCountSheet {
     chartRendered: boolean = false;
 
     constructor() {
         this.myChart = null; 
+        this.listOfTopics = [];
+    }
 
+    populateCols(topics: Topic[]) {
+        topics.forEach((topic) => {
+            this.listOfTopics.push(topic.title);
+        });
     }
 
     populateUserData(userData: UserMetric) {
@@ -50,9 +62,13 @@ export class TopicCountSheet {
                 trigger: 'item',
                 formatter: '{a} <br/>{b}: {c} ({d}%)'
             },
+            backgroundColor: {
+                image: bgPatternImg,
+                repeat: 'repeat'
+            },
             legend: {
                 data: [
-                    user.topicActivity.map((topic) => topic.title)
+                    user?.topics.map((topic) => topic.title) || []
                 ]
             },
             series: [
@@ -68,10 +84,10 @@ export class TopicCountSheet {
                     labelLine: {
                         show: false
                     },
-                    data: user.topicActivity.map((topic) => ({
+                    data: user?.topicActivity.filter((topic) => ({
                         value: topic.count,
                         name: topic.title
-                    }))
+                    }))||[]
                 },
                 {
                     name: 'Outer Pie',
@@ -112,14 +128,14 @@ export class TopicCountSheet {
                             }
                         }
                     },
-                    data: user.topics.map((topic) => ({
+                    data: user?.topics.map((topic) => ({
                         value: topic.total_duration,
-                        name: topic.title
-                    }))
+                        name: topic.title 
+                    })) || []
                 }
             ]
         };
-        // Initialize outerPieData as an empty array
+        // Initialise outerPieData as an empty array
         let outerPieData = [];
 
         // Listen to click event on the inner pie chart
@@ -152,8 +168,12 @@ export class TopicCountSheet {
                 trigger: 'item',
                 formatter: '{a} <br/>{b}: {c} ({d}%)'
             },
+            backgroundColor: {
+                image: bgPatternImg,
+                repeat: 'repeat'
+            },
             legend: {
-                data: user.topicActivity.map((topic) => topic.title)
+                data: user?.topicActivity.map((topic) => topic.title) || []
             },
             series: [
                 {
@@ -168,10 +188,10 @@ export class TopicCountSheet {
                     labelLine: {
                         show: false
                     },
-                    data: user.topicActivity.map((topic) => ({
+                    data: user?.topicActivity.map((topic) => ({
                         value: topic.count || 0, // Set count to 0 if falsy
                         name: topic.title
-                    }))
+                    })) || []
                 },
                 {
                     name: 'Outer Pie',
@@ -212,10 +232,10 @@ export class TopicCountSheet {
                             }
                         }
                     },
-                    data: user.topics.map((topic) => ({
+                    data: user?.topics.map((topic) => ({
                         value: topic.total_duration,
                         name: topic.title
-                    }))
+                    })) || []
                 }
             ]
         };

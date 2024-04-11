@@ -22,7 +22,6 @@
         <div class="ml-2">Dashboard</div>
       </a>
     </li>
-
     <hr />
     <li class="flex">
       <!-- svelte-ignore a11y-missing-attribute -->
@@ -59,9 +58,15 @@
         </li>
       {/if}
       <li>
-        <a href="/new-time/{currentCourseUrl}" rel="noreferrer">
+        <a href="/next-time/{currentCourseUrl}" rel="noreferrer">
+          <Icon icon="tdesign:chart-analytics" color="rgba(var(--color-primary-500))" height="20" />
+          <div class="ml-2">Tutors Time (next)</div>
+        </a>
+      </li>
+      <li>
+        <a href="/time/{currentCourseUrl}" rel="noreferrer">
           <Icon icon="fluent:clock-alarm-24-filled" color="rgba(var(--color-primary-500))" height="20" />
-          <div class="ml-2">Tutors Time</div>
+          <div class="ml-2">Tutors Time (original)</div>
         </a>
       </li>
       <hr />

@@ -14,8 +14,8 @@
   import SearchButton from "$lib/ui/navigators/buttons/SearchButton.svelte";
   import TutorsTimeIndicator from "$lib/ui/navigators/buttons/TutorsTimeIndicator.svelte";
   import { currentCourse, onlineStatus, transitionKey } from "$lib/stores";
-  //import { analyticsService } from "$lib/services/firebaseAnalytics";
-  import { analyticsService } from "$lib/services/supabaseAnalytics";  
+  import { firebaseAnalyticsService } from "$lib/services/firebaseAnalytics";
+  import { supabaseAnalyticsService } from "$lib/services/supabaseAnalytics";  
   import { goto } from "$app/navigation";
   import { beforeUpdate } from "svelte";
   import { fade } from "svelte/transition";
@@ -38,7 +38,8 @@
   function handleOnlineStatusChange() {
     status = !status;
     onlineStatus.set(status);
-    analyticsService.setOnlineStatus(status, session);
+    supabaseAnalyticsService.setOnlineStatus(status, session);
+    firebaseAnalyticsService.setOnlineStatus(status, session);
   }
 
   const handleSignOut = async () => {

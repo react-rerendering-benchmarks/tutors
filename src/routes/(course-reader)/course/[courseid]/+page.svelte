@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
-  //import { analyticsService } from "$lib/services/firebaseAnalytics";
-  import { analyticsService } from "$lib/services/supabaseAnalytics";  
+  import { firebaseAnalyticsService } from "$lib/services/firebaseAnalytics";
+  import { supabaseAnalyticsService } from "$lib/services/supabaseAnalytics";  
   import { initFirebase } from "$lib/services/utils/firebase";
   import { getKeys } from "$lib/environment";
   import Composite from "$lib/ui/learning-objects/structure/Composite.svelte";
@@ -18,8 +18,10 @@
         localStorage.setItem("isAuthenticating", "true");
         goto("/auth");
       } else {
-        session.onlineStatus = await analyticsService.getOnlineStatus(data.course, session);
-        analyticsService.updateLogin(data.course.courseId, data.session);
+        session.onlineStatus = await firebaseAnalyticsService.getOnlineStatus(data.course, session);
+        firebaseAnalyticsService.updateLogin(data.course.courseId, data.session);
+        session.onlineStatus = await supabaseAnalyticsService.getOnlineStatus(data.course, session);
+        supabaseAnalyticsService.updateLogin(data.course.courseId, data.session);
       }
     }
 

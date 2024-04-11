@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { UserMetric } from "$lib/services/types/metrics";
-  import { LabBoxPlot } from "$lib/services/sheets/new-analytics/lab-box-plot";
+  import { LabBoxPlot } from "$lib/services/sheets/next-analytics/lab-box-plot";
   import type { Lo } from "$lib/services/models/lo-types";
 
   export let userMap: Map<string, UserMetric>;
