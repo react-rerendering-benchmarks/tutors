@@ -6,6 +6,7 @@
   import LabTime from "$lib/ui/time/LabTime.svelte";
   import InstructorCalendarTime from "$lib/ui/time/InstructorCalendarTime.svelte";
   import CalendarTime from "$lib/ui/time/CalendarTime.svelte";
+    import InstructorLabTime from "$lib/ui/time/InstructorLabTime.svelte";
 
   export let data: any;
 

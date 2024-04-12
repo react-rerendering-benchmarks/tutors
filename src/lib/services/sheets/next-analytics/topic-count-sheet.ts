@@ -1,9 +1,9 @@
 import * as echarts from 'echarts/core';
 import {
-    TooltipComponent,
-    type TooltipComponentOption,
-    LegendComponent,
-    type LegendComponentOption
+  TooltipComponent,
+  type TooltipComponentOption,
+  LegendComponent,
+  type LegendComponentOption
 } from 'echarts/components';
 import { PieChart, type PieSeriesOption } from 'echarts/charts';
 import { LabelLayout } from 'echarts/features';
@@ -11,17 +11,18 @@ import { CanvasRenderer } from 'echarts/renderers';
 import type { UserMetric } from '$lib/services/types/metrics';
 import { backgroundPattern } from '../next-charts/next-charts-background-url';
 import type { Topic } from '$lib/services/models/lo-types';
+import { StudentPieChart } from '../next-charts/pie-chart';
 
 echarts.use([
-    TooltipComponent,
-    LegendComponent,
-    PieChart,
-    CanvasRenderer,
-    LabelLayout
+  TooltipComponent,
+  LegendComponent,
+  PieChart,
+  CanvasRenderer,
+  LabelLayout
 ]);
 
 type EChartsOption = echarts.ComposeOption<
-    TooltipComponentOption | LegendComponentOption | PieSeriesOption
+  TooltipComponentOption | LegendComponentOption | PieSeriesOption
 >;
 
 var option: EChartsOption;
@@ -34,212 +35,133 @@ const bgPatternImg = new Image();
 bgPatternImg.src = bgPatternSrc;
 
 export class TopicCountSheet {
-    chartRendered: boolean = false;
+  chartRendered: boolean = false;
 
-    constructor() {
-        this.myChart = null; 
-        this.listOfTopics = [];
+  constructor() {
+    this.myChart = null;
+    this.listOfTopics = [];
+    this.users = null;
+  }
+
+  populateCols(topics: Topic[]) {
+    topics.forEach((topic) => {
+      this.listOfTopics.push(topic.title);
+    });
+  }
+
+  populateUserData(userData: UserMetric) {
+    user = userData;
+  };
+
+  // ** START Populate the data for all users
+
+  populateUsersData(usersData) {
+    this.users = usersData || [];
+  };
+
+  renderChart() {
+    if (this.myChart === null) {
+      // If chart instance doesn't exist, create a new one
+      this.myChart = echarts.init(document.getElementById('chart'));
     }
+    if (this.users === null) {
+      const singleUserInnerData = user?.topicActivity.map((topic) => ({
+        value: topic.count,
+        name: topic.title
+      }))
 
-    populateCols(topics: Topic[]) {
-        topics.forEach((topic) => {
-            this.listOfTopics.push(topic.title);
-        });
-    }
+      const singleUserOuterData = user?.topics.map((topic) => ({
+        value: topic.total_duration,
+        name: topic.title
+      }))
 
-    populateUserData(userData: UserMetric) {
-        user = userData;
-    }
+      const option = StudentPieChart(bgPatternImg, user, null,  singleUserInnerData, singleUserOuterData);
 
-    renderChart() {
-        if (this.myChart === null) {
-            // If chart instance doesn't exist, create a new one
-            this.myChart = echarts.init(document.getElementById('chart'));
-        }
+      this.myChart.setOption(option);
 
-        option = {
-            tooltip: {
-                trigger: 'item',
-                formatter: '{a} <br/>{b}: {c} ({d}%)'
-            },
-            backgroundColor: {
-                image: bgPatternImg,
-                repeat: 'repeat'
-            },
-            legend: {
-                data: [
-                    user?.topics.map((topic) => topic.title) || []
-                ]
-            },
-            series: [
-                {
-                    name: 'Inner Pie',
-                    type: 'pie',
-                    selectedMode: 'single',
-                    radius: [0, '30%'],
-                    label: {
-                        position: 'inner',
-                        fontSize: 14
-                    },
-                    labelLine: {
-                        show: false
-                    },
-                    data: user?.topicActivity.filter((topic) => ({
-                        value: topic.count,
-                        name: topic.title
-                    }))||[]
-                },
-                {
-                    name: 'Outer Pie',
-                    type: 'pie',
-                    radius: ['45%', '60%'],
-                    labelLine: {
-                        length: 30
-                    },
-                    label: {
-                        formatter: '{a|{a}}{abg|}\n{hr|}\n  {b|{b}:}{c}  {per|{d}%}  ',
-                        backgroundColor: '#F6F8FC',
-                        borderColor: '#8C8D8E',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        rich: {
-                            a: {
-                                color: '#6E7079',
-                                lineHeight: 22,
-                                align: 'center'
-                            },
-                            hr: {
-                                borderColor: '#8C8D8E',
-                                width: '100%',
-                                borderWidth: 1,
-                                height: 0
-                            },
-                            b: {
-                                color: '#4C5058',
-                                fontSize: 14,
-                                fontWeight: 'bold',
-                                lineHeight: 33
-                            },
-                            per: {
-                                color: '#fff',
-                                backgroundColor: '#4C5058',
-                                padding: [3, 4],
-                                borderRadius: 4
-                            }
-                        }
-                    },
-                    data: user?.topics.map((topic) => ({
-                        value: topic.total_duration,
-                        name: topic.title 
-                    })) || []
-                }
-            ]
-        };
-        // Initialise outerPieData as an empty array
-        let outerPieData = [];
 
-        // Listen to click event on the inner pie chart
-        this.myChart.on('click', (params) => {
-            if (params.seriesName === 'Inner Pie') {
-                outerPieData = []; // Reset outerPieData array
+      let outerPieData = [];
 
-                // Find the corresponding data for the clicked inner pie slice
-                user.topics.forEach((topic) => {
-                    if (topic.topic_title === params.name) {
-                        outerPieData.push({ value: topic.total_duration, name: topic.title });
-                    }
-                });
+      // Listen to click event on the inner pie chart
+      this.myChart.on('click', (params) => {
+        if (params.seriesName === 'Inner Pie') {
+          outerPieData = []; // Reset outerPieData array
 
-                // Update the data for the outer pie chart
-                const chartInstance = echarts.getInstanceByDom(document.getElementById('chart'));
-                if (chartInstance) {
-                    chartInstance.setOption({
-                        series: [{
-                            name: 'Outer Pie',
-                            data: outerPieData
-                        }]
-                    });
-                }
+          // Find the corresponding data for the clicked inner pie slice
+          user.topics.forEach((topic) => {
+            if (topic.topic_title === params.name) {
+              outerPieData.push({ value: topic.total_duration, name: topic.title });
             }
-        });
+          });
 
-        option = {
-            tooltip: {
-                trigger: 'item',
-                formatter: '{a} <br/>{b}: {c} ({d}%)'
-            },
-            backgroundColor: {
-                image: bgPatternImg,
-                repeat: 'repeat'
-            },
-            legend: {
-                data: user?.topicActivity.map((topic) => topic.title) || []
-            },
-            series: [
-                {
-                    name: 'Inner Pie',
-                    type: 'pie',
-                    selectedMode: 'single',
-                    radius: [0, '30%'],
-                    label: {
-                        position: 'inner',
-                        fontSize: 14
-                    },
-                    labelLine: {
-                        show: false
-                    },
-                    data: user?.topicActivity.map((topic) => ({
-                        value: topic.count || 0, // Set count to 0 if falsy
-                        name: topic.title
-                    })) || []
-                },
-                {
-                    name: 'Outer Pie',
-                    type: 'pie',
-                    radius: ['45%', '60%'],
-                    labelLine: {
-                        length: 30
-                    },
-                    label: {
-                        formatter: '{a|{a}}{abg|}\n{hr|}\n  {b|{b}:}{c}  {per|{d}%}  ',
-                        backgroundColor: '#F6F8FC',
-                        borderColor: '#8C8D8E',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        rich: {
-                            a: {
-                                color: '#6E7079',
-                                lineHeight: 22,
-                                align: 'center'
-                            },
-                            hr: {
-                                borderColor: '#8C8D8E',
-                                width: '100%',
-                                borderWidth: 1,
-                                height: 0
-                            },
-                            b: {
-                                color: '#4C5058',
-                                fontSize: 14,
-                                fontWeight: 'bold',
-                                lineHeight: 33
-                            },
-                            per: {
-                                color: '#fff',
-                                backgroundColor: '#4C5058',
-                                padding: [3, 4],
-                                borderRadius: 4
-                            }
-                        }
-                    },
-                    data: user?.topics.map((topic) => ({
-                        value: topic.total_duration,
-                        name: topic.title
-                    })) || []
+          // Update the data for the outer pie chart
+          const chartInstance = echarts.getInstanceByDom(document.getElementById('chart'));
+          if (chartInstance) {
+            chartInstance.setOption({
+              series: [{
+                name: 'Outer Pie',
+                data: outerPieData
+              }]
+            });
+          }
+        }
+      });
+      
+    } else {
+
+      this.myChart.on('click', (params) => {
+        if (params.seriesName === 'Inner Pie') {
+          // Aggregate total_duration for the clicked topic for all users
+          const usersArray = Array.from(this.users.values());
+          const outerPieData = usersArray.reduce((acc, user) => {
+            user.topics.forEach(topic => {
+              if (topic.topic_title === params.name) {
+
+                const existing = acc.find(a => a.name === topic.title);
+                if (existing) {
+                  existing.value += topic.total_duration;
+                } else {
+                  acc.push({ value: topic.total_duration, name: topic.title });
                 }
-            ]
-        };
-        this.myChart.setOption(option);
+              }
+
+            });
+
+            return acc;
+          }, []);
+
+          // Update the data for the outer pie chart
+          const chartInstance = echarts.getInstanceByDom(document.getElementById('chart'));
+          if (chartInstance) {
+            chartInstance.setOption({
+              series: [{
+                name: 'Outer Pie',
+                data: outerPieData
+              }]
+            });
+          }
+        }
+      });
+
+      let allUsersTopicActivity = [];
+      const usersArray = Array.from(this.users.values());
+      allUsersTopicActivity = usersArray.reduce((acc, user) => {
+        user.topicActivity.forEach(activity => {
+          let existing = acc.find(item => item.name === activity.title);
+          if (existing) {
+            existing.value += activity.count;
+          } else {
+            acc.push({ value: activity.count, name: activity.title });
+          }
+        });
+        return acc;
+      }, []);
+
+      const option = StudentPieChart(bgPatternImg, user, allUsersTopicActivity);
+
+      this.myChart.setOption(option);
     }
+
+  }
 }
 

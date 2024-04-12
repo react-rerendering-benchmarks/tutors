@@ -3,7 +3,6 @@
   import { fade } from "svelte/transition";
   import { writable, type Writable } from "svelte/store";
   import { Tab, TabGroup } from "@skeletonlabs/skeleton";
-  import AllActivityTime from "$lib/ui/time/AllActivityTime.svelte";
   import TopicTimeNewChart from "$lib/ui/time/next-time/TopicTimeNewChart.svelte";
   import LabTimeNewChart from "$lib/ui/time/next-time/LabTimeNewChart.svelte";
   import CalendarTimeNewChart from "$lib/ui/time/next-time/CalendarTimeNewChart.svelte";
@@ -14,6 +13,7 @@
   import NewTopicTime from "$lib/ui/time/next-time/NewTopicTime.svelte";
   import NewInstructorTopicTime from "$lib/ui/time/next-time/NewInstructorTopicTime.svelte";
   import LiveStudentFeed from "$lib/ui/time/next-time/LiveStudentFeed.svelte";
+  import InstructorTotalTopicTimePieChart from "$lib/ui/time/next-time/InstructorTotalTopicTimePieChart.svelte";
 
   export let data: any;
 
@@ -58,9 +58,10 @@
       {#if data.course?.hasEnrollment}
         <Tab bind:group={tabSet} name="LabsAllStudent" value={6}>Labs(enrolled)</Tab>
         <Tab bind:group={tabSet} name="topicsAllStudent" value={7}>Topics(enrolled)</Tab>
+        <Tab bind:group={tabSet} name="total-topics-all-Students" value={8}>Aggregated Topics(enrolled)</Tab>
       {/if}
-      <Tab bind:group={tabSet} name="allLabsBoxPlot" value={8}>Labs(Box Plot)</Tab>
-      <Tab bind:group={tabSet} name="liveStudents" value={9}>Active (now)</Tab>
+      <Tab bind:group={tabSet} name="allLabsBoxPlot" value={9}>Labs(Box Plot)</Tab>
+      <Tab bind:group={tabSet} name="liveStudents" value={10}>Active (now)</Tab>
     {/if}
   </TabGroup>
   {#if tabSet === 0}
@@ -86,8 +87,10 @@
   {:else if tabSet === 7}
     <NewInstructorTopicTime userMap={data.users} topics={data.allTopics} />
   {:else if tabSet === 8}
-    <BoxPlotInstructorChart userMap={data.users} allLabs={data.allLabs} />
+    <InstructorTotalTopicTimePieChart userMap={data.users} topics={data.allTopics} />
   {:else if tabSet === 9}
-    <LiveStudentFeed userMap={data.users} courseName={data.course.courseId}/>
+    <BoxPlotInstructorChart userMap={data.users} allLabs={data.allLabs} />
+  {:else if tabSet === 10}
+    <LiveStudentFeed userMap={data.users} courseName={data.course.courseId} />
   {/if}
 </div>

@@ -20,7 +20,5 @@
 </script>
 
 <div class="h-screen">
-    <div id="chart" class="ag-theme-balham h-5/6" />
+  <div id="chart" class="ag-theme-balham h-5/6" />
 </div>
-
-
