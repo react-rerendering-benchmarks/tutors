@@ -14,6 +14,7 @@
   import NewInstructorTopicTime from "$lib/ui/time/next-time/NewInstructorTopicTime.svelte";
   import LiveStudentFeed from "$lib/ui/time/next-time/LiveStudentFeed.svelte";
   import InstructorTotalTopicTimePieChart from "$lib/ui/time/next-time/InstructorTotalTopicTimePieChart.svelte";
+  import InstructorTopicBoxPlotChart from "$lib/ui/time/next-time/InstructorTopicBoxPlotChart.svelte";
 
   export let data: any;
 
@@ -61,7 +62,8 @@
         <Tab bind:group={tabSet} name="total-topics-all-Students" value={8}>Aggregated Topics(enrolled)</Tab>
       {/if}
       <Tab bind:group={tabSet} name="allLabsBoxPlot" value={9}>Labs(Box Plot)</Tab>
-      <Tab bind:group={tabSet} name="liveStudents" value={10}>Active (now)</Tab>
+      <Tab bind:group={tabSet} name="allTopicsBoxPlot" value={10}>Topics(Box Plot)</Tab>
+      <Tab bind:group={tabSet} name="liveStudents" value={11}>Active (now)</Tab>
     {/if}
   </TabGroup>
   {#if tabSet === 0}
@@ -91,6 +93,8 @@
   {:else if tabSet === 9}
     <BoxPlotInstructorChart userMap={data.users} allLabs={data.allLabs} />
   {:else if tabSet === 10}
+    <InstructorTopicBoxPlotChart userMap={data.users} topics={data.allTopics} />
+  {:else if tabSet === 11}
     <LiveStudentFeed userMap={data.users} courseName={data.course.courseId} />
   {/if}
 </div>

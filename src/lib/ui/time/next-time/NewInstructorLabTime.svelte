@@ -10,10 +10,10 @@
   let labSheet = new LabSheet(allLabs, userMap);
 
   onMount(() => {
-    labSheet.populateUsersData(userMap);
+    labSheet.populateUsersData();
 
     const combinedLabData = labSheet.prepareCombinedLabData(userMap);
-    labSheet.renderCombinedBoxplotChart(document.getElementById('combined-heatmap'), combinedLabData);
+    labSheet.renderCombinedLabChart(document.getElementById('combined-heatmap'), combinedLabData, "Total Time: Labs");
 });
 
 </script>

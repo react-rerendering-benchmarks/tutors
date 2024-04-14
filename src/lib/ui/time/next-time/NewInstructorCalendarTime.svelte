@@ -8,10 +8,15 @@
   let calendarSheet = new CalendarSheet();
 
   onMount(() => {
-    Array.from(userMap.values()).forEach((user) => {
-      calendarSheet.createChartContainer(user.nickname);
-      calendarSheet.renderChart(user);
-    });
+    if(userMap.size > 0) {
+      Array.from(userMap.values()).forEach((user) => {
+        calendarSheet.createChartContainer(user.nickname);
+        calendarSheet.renderChart(user);
+      });
+    }else{
+      calendarSheet.createChartContainer(userMap.values().next().value);
+      calendarSheet.renderChart(userMap.values().next().value);
+    }
   });
 
   // Calculate the height of each chart container dynamically
@@ -19,12 +24,13 @@
 </script>
 
 <div class="h-screen overflow-auto">
-  {#if userMap}
+  {#if userMap.size > 0}
     {#each Array.from(userMap?.keys()) as userId}
       <div id={`chart-${userId}`} style={`height: 50%; width:100%;overflow-y: scroll;`}></div>
     {/each}
-  {:else}
     <div id="heatmap-container" style="height: ${chartHeight}; width:100%;"></div>
+  {:else}
+    <div id="heatmap-container" style="height: 100%; width:100%;"></div>
   {/if}
 </div>
 

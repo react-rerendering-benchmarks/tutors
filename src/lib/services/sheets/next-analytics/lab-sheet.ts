@@ -9,7 +9,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 import type { UserMetric } from '$lib/services/types/metrics';
 import { backgroundPattern } from '../next-charts/next-charts-background-url';
 import { heatmap } from '../next-charts/heatmap';
-
+import type { Lo } from '$lib/services/models/lo-types';
 
 echarts.use([
   TooltipComponent,
@@ -34,18 +34,23 @@ export class LabSheet {
     this.user = null;
   }
 
-  populateUsersData(usersData) {
-    this.users = usersData;
+  populateUsersData() {
+    this.populateLabTitles(this.labs)
     this.populateAndRenderUsersData(this.users, this.labs);
   }
 
   populateSingleUserData(user: UserMetric) {
     this.user = user;
+    this.populateLabTitles(this.labs)
     this.populateAndRenderSingleUserData(this.user, this.labs);
   }
 
+  populateLabTitles(allLabs: Lo[]) {
+    const labTitles = allLabs.map(lab => lab.title.trim());
+    this.categories = new Set(labTitles); 
+   }
+
   getChartContainer() {
-    // Assuming there is one container for the whole heatmap
     const container = document.getElementById('heatmap-container');
     if (container) {
       container.style.width = '100%';
@@ -59,11 +64,10 @@ export class LabSheet {
     return keysArray.indexOf(key);
   }
 
-  populateSeriesData(user, userIndex: number, allLabs) {
+  populateSeriesData(user: UserMetric, userIndex: number, allLabs) {
     const labTitles = allLabs.map(lab => lab.title.trim());
     this.categories = new Set(labTitles);
 
-    //const seriesData = usersData.forEach((user, userIndex) => 
     const seriesData = user?.labActivity?.map(activity => [
       labTitles.indexOf(activity.title.trim()),
       userIndex, // yIndex is now the index of the user in usersData array
@@ -115,7 +119,7 @@ export class LabSheet {
       name: 'Lab Activity',
       type: 'heatmap',
       top: '5%',
-      data: seriesData[0].data,
+      data: seriesData[0]?.data || [],
       label: {
         show: true
       }
@@ -129,7 +133,6 @@ export class LabSheet {
     if (!container) return; // Exit if no container found
 
     let allSeriesData = [];
-    //const yAxisData = usersData.forEach(user => user.nickname);
     let yAxisData: [] = [];
     usersData?.forEach((user, nickname) => {
       yAxisData.push(user?.nickname)
@@ -144,7 +147,7 @@ export class LabSheet {
     const series = [{
       name: 'Lab Activity',
       type: 'heatmap',
-      data: allSeriesData,
+      data: allSeriesData || [],
       label: {
         show: true
       }
@@ -166,7 +169,6 @@ export class LabSheet {
     if (!container) return;
 
     let allSeriesData = [];
-    //const yAxisData = usersData.forEach(user => user.nickname);
     let yAxisData: [] = [];
     usersData?.forEach((user, nickname) => {
       yAxisData.push(user?.nickname)
@@ -194,7 +196,7 @@ export class LabSheet {
     const labActivities = new Map();
 
     // Aggregate counts and nicknames for each lab
-    data.forEach(user => {
+    data?.forEach(user => {
       user?.labActivity.forEach(lab => {
         if (!labActivities.has(lab.title)) {
           labActivities.set(lab.title, []);
@@ -204,13 +206,11 @@ export class LabSheet {
       });
     });
 
-    const boxplotData = Array.from(labActivities).map(([title, activities]) => {
+    const heatmapData = Array.from(labActivities).map(([title, activities]) => {
       activities.sort((a, b) => a.count - b.count);
       const addedCount = activities.reduce((acc, curr) => acc + curr.count, 0);
 
       const lowData = activities[0];
-      const topTwo = activities[1];
-
       const highData = activities[activities.length - 1];
       return {
         value: addedCount,
@@ -222,24 +222,28 @@ export class LabSheet {
       };
     });
 
-    return boxplotData;
+    return heatmapData;
   }
 
-  renderCombinedBoxplotChart(container, boxplotData) {
+  renderCombinedLabChart(container: HTMLElement, labData: any[], chartTitle: string) {
     const chart = echarts.init(container);
 
-    const heatmapData = boxplotData.map((item, index) => [index, 0, item.value]);
-    const titles = boxplotData.map(item => item.title);
+    const heatmapData = labData.map((item, index) => [index, 0, item.value]);
+    const titles = labData.map(item => item.title);
 
     // Heatmap option
     const option = {
+      title: {
+        top: 30,
+        left: 'center',
+        text: chartTitle,
+      },
       tooltip: {
         position: 'bottom',
-
         // Now the formatter should refer to the series data indices
         formatter: function (params) {
           const dataIndex = params.dataIndex;
-          const dataItem = boxplotData[dataIndex];
+          const dataItem = labData[dataIndex];
           let tipHtml = dataItem.title + '<br />';
           tipHtml += 'Min: ' + dataItem.lowValue + ' (' + dataItem.lowNickname + ')<br />';
           tipHtml += 'Max: ' + dataItem.highValue + ' (' + dataItem.highNickname + ')';
@@ -264,7 +268,7 @@ export class LabSheet {
       },
       visualMap: {
         min: 0,
-        max: 250, // Adjust based on your data range
+        max: 250, 
         calculable: true,
         orient: 'horizontal',
         left: 'center',

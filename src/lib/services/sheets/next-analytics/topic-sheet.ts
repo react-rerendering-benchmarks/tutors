@@ -9,7 +9,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 import type { UserMetric } from '$lib/services/types/metrics';
 import { backgroundPattern } from '../next-charts/next-charts-background-url';
 import { heatmap } from '../next-charts/heatmap';
-
+import type { Topic } from '$lib/services/models/lo-types';
 
 echarts.use([
   TooltipComponent,
@@ -19,10 +19,8 @@ echarts.use([
   CanvasRenderer
 ]);
 
-const bgPatternSrc = backgroundPattern;
-
 const bgPatternImg = new Image();
-bgPatternImg.src = bgPatternSrc;
+bgPatternImg.src = backgroundPattern;
 
 export class TopicSheet {
   chartRendered: boolean = false;
@@ -36,8 +34,8 @@ export class TopicSheet {
     this.user = null;
   }
 
-  populateUsersData(usersData) {
-    this.users = usersData;
+  populateUsersData() {
+    this.populateTopicTitles(this.topics)
     this.populateAndRenderUsersData(this.users, this.topics);
   }
 
@@ -45,6 +43,11 @@ export class TopicSheet {
     this.user = user;
     this.populateAndRenderSingleUserData(this.user, this.topics);
   }
+
+  populateTopicTitles(allTopics: Topic[]) {
+    const topicTitles = allTopics.map(topic => topic.title.trim());
+    this.categories = new Set(topicTitles); 
+   }
 
   getChartContainer() {
     // Assuming there is one container for the whole heatmap
@@ -66,7 +69,7 @@ export class TopicSheet {
     this.categories = new Set(topicTitles);
 
     //const seriesData = usersData.forEach((user, userIndex) => 
-    const seriesData = user.topicActivity.map(activity => [
+    const seriesData = user?.topicActivity?.map(activity => [
       topicTitles.indexOf(activity.title.trim()),
       userIndex, // yIndex is now the index of the user in usersData array
       activity.count
@@ -115,8 +118,8 @@ export class TopicSheet {
     const series = [{
       name: 'Topic Activity',
       type: 'heatmap',
-      data: seriesData[0].data,
-      top: '95%',
+      data: seriesData[0]?.data || [],
+      top: '5%',
       label: {
         show: true
       }
@@ -130,10 +133,9 @@ export class TopicSheet {
     if (!container) return; // Exit if no container found
 
     let allSeriesData = [];
-    //const yAxisData = usersData.forEach(user => user.nickname);
     let yAxisData: [] = [];
     usersData?.forEach((user, nickname) => {
-      yAxisData.push(user.nickname)
+      yAxisData.push(user?.nickname)
 
       const index = this.getIndexFromMap(usersData, nickname);
 
@@ -145,7 +147,7 @@ export class TopicSheet {
     const series = [{
       name: 'Topic Activity',
       type: 'heatmap',
-      data: allSeriesData,
+      data: allSeriesData || [],
       label: {
         show: true
       }
@@ -167,7 +169,6 @@ export class TopicSheet {
     if (!container) return;
 
     let allSeriesData = [];
-    //const yAxisData = usersData.forEach(user => user.nickname);
     let yAxisData: [] = [];
     usersData?.forEach((user, nickname) => {
       yAxisData.push(user?.nickname)
@@ -195,7 +196,7 @@ export class TopicSheet {
     const topicActivities = new Map();
 
     // Aggregate counts and nicknames for each lab
-    data.forEach(user => {
+    data?.forEach(user => {
       user?.topicActivity.forEach(topic => {
         if (!topicActivities.has(topic.title)) {
           topicActivities.set(topic.title, []);
@@ -225,7 +226,7 @@ export class TopicSheet {
     return heatmapData;
   }
 
-  renderCombinedTopicChart(container: HTMLElement, heatmapActivities: [], chartTitle: string) {
+  renderCombinedTopicChart(container: HTMLElement, heatmapActivities: any[], chartTitle: string) {
     const chart = echarts.init(container);
 
     const heatmapData = heatmapActivities.map((item, index) => [index, 0, item.value]);
@@ -268,7 +269,7 @@ export class TopicSheet {
       },
       visualMap: {
         min: 0,
-        max: 250, // Adjust based on your data range
+        max: 250, 
         calculable: true,
         orient: 'horizontal',
         left: 'center',

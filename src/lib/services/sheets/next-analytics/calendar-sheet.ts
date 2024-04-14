@@ -12,6 +12,7 @@ import type { UserMetric } from '$lib/services/types/metrics';
 import { calendarMap } from '../next-charts/calendar';
 import { backgroundPattern } from '../next-charts/next-charts-background-url';
 import { GraphicComponent } from 'echarts/components';
+import { nextTutorsAnalyticsLogo } from '../next-charts/personlised-logo';
 
 echarts.use([
   TitleComponent,
@@ -47,7 +48,7 @@ export class CalendarSheet {
   }
 
   populateAndRenderUsersData(usersData: any) {
-    usersData.forEach(user => {
+    usersData?.forEach(user => {
       this.createChartContainer(user?.nickname);
       this.renderChart(user);
     });
@@ -94,12 +95,30 @@ export class CalendarSheet {
     }
 
     const chart = echarts.init(chartContainer);
+    if (!sessionStorage.getItem('logoShown')) {
+      chart.setOption(nextTutorsAnalyticsLogo());
+      sessionStorage.setItem('logoShown', 'true');
+      setTimeout(() => {
+        // Prepare the actual data settings
+        const option = calendarMap(user, bgPatternImg, currentRange);
+  
+        chart.setOption(option, true); // The 'true' parameter clears the previous setting completely before applying new options
+  
+        // Explicitly refresh the chart to ensure updates are visible
+        chart.hideLoading();  // Hide loading overlay if used
+        chart.resize();       // Force a resize to ensure proper layout
+      }, 2900);
+
+    }else{
     this.myCharts[user?.nickname] = chart;
+      // Prepare the actual data settings
+      const option = calendarMap(user, bgPatternImg, currentRange);
+
+      chart.setOption(option, true); // The 'true' parameter clears the previous setting completely before applying new options
+
+  }
 
     this.clickMonth(chart);
-
-    let option = calendarMap(user, bgPatternImg, currentRange);
-    chart.setOption(option);
-  }
+  };
 
 }

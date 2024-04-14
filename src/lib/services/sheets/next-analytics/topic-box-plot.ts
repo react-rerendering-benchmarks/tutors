@@ -21,7 +21,7 @@ echarts.use([
 const bgPatternImg = new Image();
 bgPatternImg.src = backgroundPattern;
 
-export class LabBoxPlot {
+export class TopicBoxPlot {
   prepareBoxplotData(userDataMap) {
     const boxplotData = [];
     const userNicknames = [];
@@ -29,7 +29,7 @@ export class LabBoxPlot {
     userDataMap.forEach((userData, nickname) => {
       userNicknames.push(nickname); // Collect nicknames for the y-axis
 
-      const counts = userData?.labActivity.map(activity => activity.count);
+      const counts = userData?.topicActivity.map(activity => activity.count);
       counts.sort((a, b) => a - b);
 
       const min = d3.min(counts);
@@ -46,20 +46,20 @@ export class LabBoxPlot {
 
   //combined boxplot
   prepareCombinedBoxplotData(data) {
-    const labActivities = new Map();
+    const topicActivities = new Map();
 
     // Aggregate counts and nicknames for each lab
     data.forEach(user => {
-      user?.labActivity.forEach(lab => {
-        if (!labActivities.has(lab.title)) {
-          labActivities.set(lab.title, []);
+      user?.topicActivity.forEach(topic => {
+        if (!topicActivities.has(topic.title)) {
+          topicActivities.set(topic.title, []);
         }
         // Push an object containing count and nickname
-        labActivities.get(lab.title).push({ count: lab.count, nickname: user.nickname });
+        topicActivities.get(topic.title).push({ count: topic.count, nickname: user.nickname });
       });
     });
 
-    const boxplotData = Array.from(labActivities).map(([title, activities]) => {
+    const boxplotData = Array.from(topicActivities).map(([title, activities]) => {
       activities.sort((a, b) => a.count - b.count);
       const lowData = activities[0];
       const q1 = d3.quantileSorted(activities.map(a => a.count), 0.25);
@@ -87,7 +87,7 @@ export class LabBoxPlot {
 
     const option = {
       title: {
-        text: 'User Lab Activity Box Plot'
+        text: 'User Topic Activity Box Plot'
       },
       backgroundColor: {
         image: bgPatternImg,
@@ -108,7 +108,7 @@ export class LabBoxPlot {
       },
       series: [
         {
-          name: 'Lab Activity',
+          name: 'Topic Activity',
           type: 'boxplot',
           data: boxplotData
         }
@@ -123,7 +123,7 @@ export class LabBoxPlot {
 
     const option = {
       title: {
-        text: 'Lab Activity Boxplot'
+        text: 'Topic Activity Boxplot'
       },
       backgroundColor: {
         image: bgPatternImg,
@@ -137,7 +137,7 @@ export class LabBoxPlot {
       },
       xAxis: {
         type: 'category',
-        data: boxplotData.map(item => item.title), // Lab titles
+        data: boxplotData.map(item => item.title), // topic titles
         boundaryGap: true,
         nameGap: 30,
         splitArea: {
@@ -145,6 +145,13 @@ export class LabBoxPlot {
         },
         splitLine: {
           show: false
+        },
+        axisLabel: {
+          rotate: -40,
+          interval: 0,
+          textStyle: {
+            fontSize: 15
+          }
         }
       },
       yAxis: {
@@ -156,7 +163,7 @@ export class LabBoxPlot {
       },
       series: [
         {
-          name: 'Lab Activities',
+          name: 'Topic Activities',
           type: 'boxplot',
           data: boxplotData.map(item => item.value), // Use the numerical data
           // Add an extra dataset for tooltip info

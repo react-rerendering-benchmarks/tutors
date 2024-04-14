@@ -25,7 +25,6 @@ type EChartsOption = echarts.ComposeOption<
   TooltipComponentOption | LegendComponentOption | PieSeriesOption
 >;
 
-var option: EChartsOption;
 let listOfTopics: any[] = [];
 let user: UserMetric;
 
@@ -41,6 +40,7 @@ export class TopicCountSheet {
     this.myChart = null;
     this.listOfTopics = [];
     this.users = null;
+    this.user = null;
   }
 
   populateCols(topics: Topic[]) {
@@ -50,7 +50,7 @@ export class TopicCountSheet {
   }
 
   populateUserData(userData: UserMetric) {
-    user = userData;
+    this.user = userData;
   };
 
   // ** START Populate the data for all users
@@ -65,20 +65,19 @@ export class TopicCountSheet {
       this.myChart = echarts.init(document.getElementById('chart'));
     }
     if (this.users === null) {
-      const singleUserInnerData = user?.topicActivity.map((topic) => ({
+      const singleUserInnerData = this.user?.topicActivity.map((topic) => ({
         value: topic.count,
         name: topic.title
       }))
 
-      const singleUserOuterData = user?.topics.map((topic) => ({
+      const singleUserOuterData = this.user?.topics.map((topic) => ({
         value: topic.total_duration,
         name: topic.title
       }))
 
-      const option = StudentPieChart(bgPatternImg, user, null,  singleUserInnerData, singleUserOuterData);
+      const option = StudentPieChart(bgPatternImg, this.user, [],  singleUserInnerData, singleUserOuterData);
 
       this.myChart.setOption(option);
-
 
       let outerPieData = [];
 
@@ -88,7 +87,7 @@ export class TopicCountSheet {
           outerPieData = []; // Reset outerPieData array
 
           // Find the corresponding data for the clicked inner pie slice
-          user.topics.forEach((topic) => {
+          this.user.topics.forEach((topic) => {
             if (topic.topic_title === params.name) {
               outerPieData.push({ value: topic.total_duration, name: topic.title });
             }
@@ -106,7 +105,6 @@ export class TopicCountSheet {
           }
         }
       });
-      
     } else {
 
       this.myChart.on('click', (params) => {
@@ -157,7 +155,7 @@ export class TopicCountSheet {
         return acc;
       }, []);
 
-      const option = StudentPieChart(bgPatternImg, user, allUsersTopicActivity);
+      const option = StudentPieChart(bgPatternImg, user, allUsersTopicActivity, [], []);
 
       this.myChart.setOption(option);
     }

@@ -13,8 +13,6 @@
     topicCountSheet.populateUsersData(userMap);
     topicCountSheet.renderChart();
     topicCountSheet.chartRendered = true;
-      
-    
   });
 </script>
 

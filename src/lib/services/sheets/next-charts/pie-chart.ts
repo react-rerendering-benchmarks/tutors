@@ -1,6 +1,6 @@
 import type { UserMetric } from '$lib/services/types/metrics';
 
-export function StudentPieChart(bgPatternImg: any, user: UserMetric, allUsersTopicActivity: any[], singleUserOuterData: any[], singleUserInnerData: any[]) {
+export function StudentPieChart(bgPatternImg: any, user: UserMetric, allUsersTopicActivity: any[], singleUserInnerData: any[], singleUserOuterData: any[]) {
   return {
     tooltip: {
       trigger: 'item',
@@ -27,7 +27,7 @@ export function StudentPieChart(bgPatternImg: any, user: UserMetric, allUsersTop
           show: false
         },
         
-        data: allUsersTopicActivity || singleUserOuterData || []
+        data: allUsersTopicActivity.length !== 0 ? allUsersTopicActivity : singleUserInnerData || []
       },
       {
         name: 'Outer Pie',

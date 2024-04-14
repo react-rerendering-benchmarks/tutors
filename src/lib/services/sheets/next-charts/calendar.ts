@@ -24,7 +24,7 @@ export function calendarMap(user: UserMetric, bgPatternImg: HTMLImageElement, cu
     title: {
       top: 30,
       left: 'center',
-      text: 'GitHub Account for ' + user?.name || user?.nickname || '',
+      text: 'GitHub Account for ' + user?.name || user?.nickname ? user?.name || user?.nickname : '',
       link: 'https://www.github.com/' + user?.nickname || '',
       target: 'self'
     },
@@ -32,6 +32,22 @@ export function calendarMap(user: UserMetric, bgPatternImg: HTMLImageElement, cu
       image: bgPatternImg,
       repeat: 'repeat'
     },
+    graphic: [
+      {
+        type: 'image',
+        id: 'user-image',
+        left: '5%',  // You might need to adjust this
+        top: '2%',
+        z: 100,
+        bounding: 'raw',
+        style: {
+          image: user?.picture,  // URL to user's profile picture
+          width: 50,
+          height: 50
+        }
+      },
+
+    ],
     responsive: true,
     maintainAspectRatio: false,
     tooltip: { position: 'top' },

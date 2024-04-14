@@ -16,6 +16,7 @@ echarts.use([
 ]);
 
 export function heatmap(categories: any, yAxisData: any, series: any, bgPatternImg: HTMLImageElement, chartTitleString: string) {
+  const visualmapValue = series[0].data.length !== 0 ? Math.max(...series[0].data?.map(item => item[2])) : 0;
   return {
     title: {
       top: 30,
@@ -53,7 +54,7 @@ export function heatmap(categories: any, yAxisData: any, series: any, bgPatternI
     },
     yAxis: {
       type: 'category',
-      data: yAxisData,
+      data: yAxisData[0] !== undefined ? yAxisData : '',
       splitArea: {
         show: true
       },
@@ -66,7 +67,8 @@ export function heatmap(categories: any, yAxisData: any, series: any, bgPatternI
     },
     visualMap: {
       min: 0,
-      max: series[0].data ? Math.max(...series[0].data.map(item => item[2])) : 0,
+      // max: series[0].data.length !== 0 ? Math.max(...series[0].data.map(item => item[2])) : 0,
+      max: visualmapValue,
       calculable: true,
       orient: 'horizontal',
       left: 'center',
