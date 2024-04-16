@@ -4,7 +4,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 
 echarts.use([GraphicComponent, CanvasRenderer]);
 
-export function nextTutorsAnalyticsLogo() {
+export function nextTutorsAnalyticsLogo(logoText: string) {
 return {
   graphic: {
     elements: [
@@ -13,7 +13,7 @@ return {
         left: 'center',
         top: 'center',
         style: {
-          text: 'Next Tutors Analytics',
+          text: logoText,
           fontSize: 80,
           fontWeight: 'bold',
           lineDash: [0, 200],

@@ -5,6 +5,7 @@ import {
   VisualMapComponent
 } from 'echarts/components';
 import { HeatmapChart } from 'echarts/charts';
+import type { EChartsOption } from 'echarts';
 import { CanvasRenderer } from 'echarts/renderers';
 
 echarts.use([
@@ -15,7 +16,7 @@ echarts.use([
   CanvasRenderer
 ]);
 
-export function heatmap(categories: any, yAxisData: any, series: any, bgPatternImg: HTMLImageElement, chartTitleString: string) {
+export function heatmap(categories: any, yAxisData: any, series: any, bgPatternImg: HTMLImageElement, chartTitleString: string): EChartsOption {
   const visualmapValue = series[0].data.length !== 0 ? Math.max(...series[0].data?.map(item => item[2])) : 0;
   return {
     title: {
@@ -67,7 +68,6 @@ export function heatmap(categories: any, yAxisData: any, series: any, bgPatternI
     },
     visualMap: {
       min: 0,
-      // max: series[0].data.length !== 0 ? Math.max(...series[0].data.map(item => item[2])) : 0,
       max: visualmapValue,
       calculable: true,
       orient: 'horizontal',

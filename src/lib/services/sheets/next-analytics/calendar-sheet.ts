@@ -96,7 +96,7 @@ export class CalendarSheet {
 
     const chart = echarts.init(chartContainer);
     if (!sessionStorage.getItem('logoShown')) {
-      chart.setOption(nextTutorsAnalyticsLogo());
+      chart.setOption(nextTutorsAnalyticsLogo("Next Tutors Analytics"));
       sessionStorage.setItem('logoShown', 'true');
       setTimeout(() => {
         // Prepare the actual data settings

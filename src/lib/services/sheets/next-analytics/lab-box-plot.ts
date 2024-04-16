@@ -6,10 +6,10 @@ import {
   TooltipComponent,
   GridComponent,
 } from 'echarts/components';
-import type { EChartsOption } from 'echarts';
 import { BoxplotChart } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
 import { backgroundPattern } from '../next-charts/next-charts-background-url';
+import { boxplotChart, combinedBoxplotChart } from '../next-charts/boxplot';
 echarts.use([
   TitleComponent,
   TooltipComponent,
@@ -85,35 +85,7 @@ export class LabBoxPlot {
   renderBoxPlot(container, boxplotData, userNicknames) {
     const chart = echarts.init(container);
 
-    const option = {
-      title: {
-        text: 'User Lab Activity Box Plot'
-      },
-      backgroundColor: {
-        image: bgPatternImg,
-        repeat: 'repeat'
-      },
-      tooltip: {
-        trigger: 'item',
-        axisPointer: {
-          type: 'shadow'
-        }
-      },
-      yAxis: {
-        type: 'category',
-        data: userNicknames
-      },
-      xAxis: {
-        type: 'value'
-      },
-      series: [
-        {
-          name: 'Lab Activity',
-          type: 'boxplot',
-          data: boxplotData
-        }
-      ]
-    };
+    const option = boxplotChart(bgPatternImg, userNicknames ,boxplotData, 'Lab Activity per Student Boxplot');
 
     chart.setOption(option);
   }
@@ -121,66 +93,7 @@ export class LabBoxPlot {
   renderCombinedBoxplotChart(container, boxplotData) {
     const chartInstance = echarts.init(container);
 
-    const option = {
-      title: {
-        text: 'Lab Activity Boxplot'
-      },
-      backgroundColor: {
-        image: bgPatternImg,
-        repeat: 'repeat'
-      },
-      tooltip: {
-        trigger: 'item',
-        axisPointer: {
-          type: 'shadow'
-        }
-      },
-      xAxis: {
-        type: 'category',
-        data: boxplotData.map(item => item.title), // Lab titles
-        boundaryGap: true,
-        nameGap: 30,
-        splitArea: {
-          show: false
-        },
-        splitLine: {
-          show: false
-        }
-      },
-      yAxis: {
-        type: 'value',
-        name: 'Count',
-        splitArea: {
-          show: true
-        }
-      },
-      series: [
-        {
-          name: 'Lab Activities',
-          type: 'boxplot',
-          data: boxplotData.map(item => item.value), // Use the numerical data
-          // Add an extra dataset for tooltip info
-          dataset: {
-            dimensions: ['min', 'Q1', 'median', 'Q3', 'max', 'lowNickname', 'highNickname', 'title'],
-            source: boxplotData
-          },
-          tooltip: {
-            // Now the formatter should refer to the series data indices
-            formatter: function (params) {
-              const dataIndex = params.dataIndex;
-              const dataItem = boxplotData[dataIndex];
-              let tipHtml = dataItem.title + '<br />';
-              tipHtml += 'Min: ' + dataItem.value[0] + ' (' + dataItem.lowNickname + ')<br />';
-              tipHtml += 'Q1: ' + dataItem.value[1] + '<br />';
-              tipHtml += 'Median: ' + dataItem.value[2] + '<br />';
-              tipHtml += 'Q3: ' + dataItem.value[3] + '<br />';
-              tipHtml += 'Max: ' + dataItem.value[4] + ' (' + dataItem.highNickname + ')';
-              return tipHtml;
-            }
-          }
-        }
-      ]
-    };
+    const option = combinedBoxplotChart(bgPatternImg, boxplotData, 'All Lab Activity Boxplot');
 
     chartInstance.setOption(option);
   }

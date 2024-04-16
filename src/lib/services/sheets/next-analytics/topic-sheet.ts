@@ -181,7 +181,7 @@ export class TopicSheet {
 
     // Now allSeriesData contains the combined data for all users
     const series = [{
-      name: 'Lab Activity',
+      name: 'Topic Activity',
       type: 'heatmap',
       data: allSeriesData,
       label: {

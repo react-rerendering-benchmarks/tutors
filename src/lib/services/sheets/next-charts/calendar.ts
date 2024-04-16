@@ -75,8 +75,8 @@ export function calendarMap(user: UserMetric, bgPatternImg: HTMLImageElement, cu
     },
     calendar: {
       top: 120,
-      left: 30,
-      right: 30,
+      left: '5%',
+      right: '5%',
       cellSize: ['auto', 50],
       range: currentRange,
       itemStyle: {
