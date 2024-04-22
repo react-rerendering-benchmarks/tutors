@@ -9,7 +9,7 @@
 
   let topicBoxPlot: TopicBoxPlot;
 
-  // Initialize the charts and render them when the component mounts
+  // Initialise the charts and render them when the component mounts
   onMount(() => {
     topicBoxPlot = new TopicBoxPlot();
     renderCharts();
@@ -18,8 +18,6 @@
   // Destroy the chart instances when the component unmounts
   onDestroy(() => {
     if (topicBoxPlot) {
-      // Clean up resources if needed
-      // For example: topicBoxPlot.destroy();
       topicBoxPlot = null;
     }
   });

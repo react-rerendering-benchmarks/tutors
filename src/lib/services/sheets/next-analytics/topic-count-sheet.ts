@@ -89,7 +89,7 @@ export class TopicCountSheet {
           // Find the corresponding data for the clicked inner pie slice
           this.user.topics.forEach((topic) => {
             if (topic.topic_title === params.name) {
-              outerPieData.push({ value: topic.total_duration, name: topic.title });
+              outerPieData.push({ value: topic.total_duration, name: topic.lo_title });
             }
           });
 
@@ -115,11 +115,11 @@ export class TopicCountSheet {
             user.topics.forEach(topic => {
               if (topic.topic_title === params.name) {
 
-                const existing = acc.find(a => a.name === topic.title);
+                const existing = acc.find(a => a.name === topic.lo_title);
                 if (existing) {
                   existing.value += topic.total_duration;
                 } else {
-                  acc.push({ value: topic.total_duration, name: topic.title });
+                  acc.push({ value: topic.total_duration, name: topic.lo_title });
                 }
               }
 
