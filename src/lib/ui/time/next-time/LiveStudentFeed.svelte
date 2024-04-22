@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { LiveStudentFeedSheet } from "$lib/services/sheets/next-analytics/live-student-feed";
   import type { UserMetric } from "$lib/services/types/metrics";
   export let userMap: Map<string, UserMetric>;
@@ -9,8 +9,23 @@
 
   onMount(() => {
     liveStudentFeedSheet = new LiveStudentFeedSheet(Array.from(userMap.values()), courseName);
-    liveStudentFeedSheet.renderCharts();
+    renderCharts();
   });
+
+  onDestroy(() => {
+    if (liveStudentFeedSheet) {
+      liveStudentFeedSheet = null;
+    }
+  });
+
+  const renderCharts = () => {
+    if (liveStudentFeedSheet) {
+      liveStudentFeedSheet.renderCharts();
+    }
+  };
+
+  window.addEventListener('focus', renderCharts);
+
 </script>
 
 <div class="h-screen">

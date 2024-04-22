@@ -81,12 +81,9 @@ export class LabBoxPlot {
     return boxplotData;
   }
 
-
   renderBoxPlot(container, boxplotData, userNicknames) {
     const chart = echarts.init(container);
-
     const option = boxplotChart(bgPatternImg, userNicknames ,boxplotData, 'Lab Activity per Student Boxplot');
-
     chart.setOption(option);
   }
 

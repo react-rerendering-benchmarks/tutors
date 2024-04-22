@@ -1,17 +1,33 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import type { UserMetric } from "$lib/services/types/metrics";
     import type {  Topic } from "$lib/services/models/lo-types";
     import { TopicSheet } from "$lib/services/sheets/next-analytics/topic-sheet";
-  
+
     export let user: UserMetric;
     export let topics: Topic[] = [];
-  
-    const topicSheet = new TopicSheet(topics, user);
+
+    let topicSheet: TopicSheet;
   
     onMount(() => {
-      topicSheet.populateSingleUserData(user);
+      topicSheet = new TopicSheet(topics, user);
+      renderChart();
     });
+
+    onDestroy(() => {
+      if (topicSheet) {
+        topicSheet = null;
+      }
+    });
+
+    const renderChart = () => {
+      if (topicSheet && user) {
+        topicSheet.populateSingleUserData(user);
+
+      }
+    };
+
+    window.addEventListener('focus', renderChart);
   </script>
   
   <div class="h-screen">

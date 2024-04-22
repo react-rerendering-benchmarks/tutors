@@ -227,7 +227,8 @@ export class LabCountSheet {
       },
       xAxis: { type: 'value' },
       yAxis: {
-        type: 'category', data: this.listOfLabs.filter(lab => lab)
+        type: 'category',
+        data: this.listOfLabs.filter(lab => lab)
         , axisLabel: { fontSize: 14 }
       },
       tooltip: {
