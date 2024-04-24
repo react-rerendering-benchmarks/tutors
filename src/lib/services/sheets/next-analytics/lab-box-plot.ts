@@ -93,6 +93,7 @@ export class LabBoxPlot {
     const option = combinedBoxplotChart(bgPatternImg, boxplotData, 'All Lab Activity Boxplot');
 
     chartInstance.setOption(option);
+    chartInstance.resize();       // Force a resize to ensure proper layout
   }
 }
 

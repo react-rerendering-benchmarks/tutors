@@ -32,6 +32,8 @@ export class TopicSheet {
     this.users = userData;
     this.categories = new Set();
     this.user = null;
+    this.yAxisData = [];
+    this.series = [];
   }
 
   populateUsersData() {
@@ -110,12 +112,12 @@ export class TopicSheet {
     if (!container) return; // Exit if no container found
 
     // yAxisData for a single user should be an array with a single element
-    let yAxisData = [user?.nickname]; // Even for a single user, this should be an array
+    this.yAxisData = [user?.nickname]; // Even for a single user, this should be an array
 
     const seriesData = this.populateSingleUserSeriesData(user, topics);
 
     // Now seriesData contains the data for a single user
-    const series = [{
+    this.series = [{
       name: 'Topic Activity',
       type: 'heatmap',
       data: seriesData[0]?.data || [],
@@ -125,7 +127,7 @@ export class TopicSheet {
       }
     }];
 
-    this.renderChart(container, yAxisData, series);
+    this.renderChart(container);
   };
 
   populateAndRenderUsersData(usersData, topics) {
@@ -133,9 +135,8 @@ export class TopicSheet {
     if (!container) return; // Exit if no container found
 
     let allSeriesData = [];
-    let yAxisData: [] = [];
     usersData?.forEach((user, nickname) => {
-      yAxisData.push(user?.nickname)
+      this.yAxisData.push(user?.nickname)
 
       const index = this.getIndexFromMap(usersData, nickname);
 
@@ -144,7 +145,7 @@ export class TopicSheet {
     });
 
     // Now allSeriesData contains the combined data for all users
-    const series = [{
+    this.series = [{
       name: 'Topic Activity',
       type: 'heatmap',
       data: allSeriesData || [],
@@ -153,13 +154,13 @@ export class TopicSheet {
       }
     }] || [];
 
-    this.renderChart(container, yAxisData, series);
+    this.renderChart(container);
   };
 
-  renderChart(container, yAxisData, series) {
+  renderChart(container) {
     const chartInstance = echarts.init(container);
 
-    const option = heatmap(this.categories, yAxisData, series, bgPatternImg, 'Topic Time: Per Student');
+    const option = heatmap(this.categories, this.yAxisData, this.series, bgPatternImg, 'Topic Time: Per Student');
 
     chartInstance.setOption(option);
   };
@@ -169,9 +170,8 @@ export class TopicSheet {
     if (!container) return;
 
     let allSeriesData = [];
-    let yAxisData: [] = [];
     usersData?.forEach((user, nickname) => {
-      yAxisData.push(user?.nickname)
+      this.yAxisData.push(user?.nickname)
 
       const index = this.getIndexFromMap(usersData, nickname);
 
@@ -180,7 +180,7 @@ export class TopicSheet {
     });
 
     // Now allSeriesData contains the combined data for all users
-    const series = [{
+    this.series = [{
       name: 'Topic Activity',
       type: 'heatmap',
       data: allSeriesData,
@@ -189,7 +189,7 @@ export class TopicSheet {
       }
     }];
 
-    this.renderChart(container, yAxisData, series);
+    this.renderChart(container);
   };
 
   prepareCombinedTopicData(data) {
@@ -255,8 +255,8 @@ export class TopicSheet {
         repeat: 'repeat'
       },
       grid: {
-        height: '10%',
-        top: '10%'
+        height: '30%',
+        top: '20%'
       },
       xAxis: {
         type: 'category',
@@ -269,7 +269,7 @@ export class TopicSheet {
       },
       visualMap: {
         min: 0,
-        max: 250, 
+        max: this.series[0]?.data.length !== 0 ? Math.max(...this.series[0]?.data?.map(item => item[2])) : 0, 
         calculable: true,
         orient: 'horizontal',
         left: 'center',

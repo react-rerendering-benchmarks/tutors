@@ -8,10 +8,9 @@
   export let calendarData: Calendar;
 
   let calendarSheet: CalendarSheet;
+  calendarSheet = new CalendarSheet();
 
-  // Initialize the chart and render it when the component mounts
   onMount(() => {
-    calendarSheet = new CalendarSheet();
     renderChart();
   });
 
@@ -19,7 +18,6 @@
   onDestroy(() => {
     if (calendarSheet) {
       // Clean up resources if needed
-      // For example: calendarSheet.destroy();
       calendarSheet = null;
     }
   });
@@ -31,8 +29,8 @@
 
   // Function to render the chart
   const renderChart = () => {
-    if (calendarSheet && user) {
-      calendarSheet.createChartContainer(user.nickname);
+    if (calendarSheet) {
+      calendarSheet.createChartContainer(user?.nickname);
       calendarSheet.renderChart(user);
     }
   };

@@ -37,7 +37,7 @@ export function StudentPieChart(bgPatternImg: any, user: UserMetric, allUsersTop
           length: 30
         },
         label: {
-          formatter: '{a|{a}}{abg|}\n{hr|}\n  {b|{b}:}{c}  {per|{d}%}  ',
+          formatter: '{a|{a}}{abg|}\n{hr|}\n  {b|{b}:}{c} mins  {per|{d}%}  ',
           backgroundColor: '#F6F8FC',
           borderColor: '#8C8D8E',
           borderWidth: 1,
@@ -69,7 +69,6 @@ export function StudentPieChart(bgPatternImg: any, user: UserMetric, allUsersTop
           }
         },
         data: ['']
-          || []
       }
     ]
   };

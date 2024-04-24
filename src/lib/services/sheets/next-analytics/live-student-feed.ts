@@ -4,6 +4,7 @@ import { TooltipComponent, GridComponent, GraphicComponent } from 'echarts/compo
 import { CanvasRenderer } from 'echarts/renderers';
 import { studentInteractionsUpdates } from '$lib/services/utils/supabase';
 import { textureBackground, backgroundPattern } from '../next-charts/next-charts-background-url';
+import { barchart } from '../next-charts/barchart';
 
 echarts.use([
   BarChart,
@@ -32,7 +33,6 @@ export class LiveStudentFeedSheet {
     this.chart = null;
     this.courseId = courseName;
     this.loadingIndicator = document.getElementById('loadingIndicator');
-    // this.initChart();
   }
 
   showLoading() {
@@ -43,12 +43,6 @@ export class LiveStudentFeedSheet {
     this.loadingIndicator.style.display = 'none';
   }
 
-  // initChart() {
-  //     const container = this.getChartContainer();
-  //     if (!container) return;
-  //     this.chart = echarts.init(container);
-  // }
-
   renderCharts() {
     this.showLoading();
 
@@ -56,12 +50,8 @@ export class LiveStudentFeedSheet {
     if (!container) return;
 
     this.chart = echarts.init(container);
-
     this.updateChartData(Array.from(this.users.values()));
-    // this.showLoadingGraphic(); 
-
     this.chart.showLoading();
-
     this.subscribeToDataUpdates();
   }
 
@@ -76,38 +66,7 @@ export class LiveStudentFeedSheet {
 
   updateChartData(usersData) {
     const chartData = usersData.map(user => user[1] || user);
-
-    const option = {
-      backgroundColor: {
-        image: bgPatternImg,
-        repeat: 'repeat'
-      },
-      xAxis: {
-        type: 'value',
-        boundaryGap: [0, 0.01]
-      },
-      yAxis: {
-        type: 'category',
-        data: chartData.map(user => user.nickname)
-      },
-      series: [{
-        type: 'bar',
-        data: chartData.map(user => Math.round(user.duration / 2) || 0),
-        itemStyle: {
-          color: {
-            image: piePatternImg,
-            repeat: 'repeat'
-          },
-          borderWidth: 3,
-          borderColor: '#235894'
-        }
-      }],
-      tooltip: {
-        trigger: 'item',
-        formatter: '{a} <br/>{b}: {c} mins'
-      }
-    };
-
+   let option = barchart(piePatternImg, bgPatternImg, chartData);
     this.chart.setOption(option, true);
   }
 
@@ -125,11 +84,8 @@ export class LiveStudentFeedSheet {
           }
         });
       }
-      // this.hideLoadingGraphic(); 
-
       this.chart.hideLoading();
       this.hideLoading();
-
     });
   }
 }

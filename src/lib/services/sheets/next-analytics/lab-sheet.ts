@@ -32,6 +32,8 @@ export class LabSheet {
     this.users = userData; // Array of user objects
     this.categories = new Set();
     this.user = null;
+    this.yAxisData = [];
+    this.series = [];
   }
 
   populateUsersData() {
@@ -48,7 +50,7 @@ export class LabSheet {
   populateLabTitles(allLabs: Lo[]) {
     const labTitles = allLabs.map(lab => lab.title.trim());
     this.categories = new Set(labTitles); 
-   }
+  }
 
   getChartContainer() {
     const container = document.getElementById('heatmap-container');
@@ -88,7 +90,6 @@ export class LabSheet {
     const labTitles = allLabs.map(lab => lab.title.trim());
     this.categories = new Set(labTitles);
 
-    // This maps each lab activity to a single row with columns as lab activities
     const seriesData = user?.labActivity?.map(activity => [
       labTitles.indexOf(activity.title.trim()), 
       0, 
@@ -107,15 +108,12 @@ export class LabSheet {
 
   populateAndRenderSingleUserData(user: UserMetric, allLabs: any) {
     const container = this.getChartContainer();
-    if (!container) return; // Exit if no container found
+    if (!container) return;
 
-    // yAxisData for a single user should be an array with a single element
-    let yAxisData = [user?.nickname]; // Even for a single user, this should be an array
+    this.yAxisData = [user?.nickname];
 
     const seriesData = this.populateSingleUserSeriesData(user, allLabs);
-
-    // Now seriesData contains the data for a single user
-    const series = [{
+   this.series = [{
       name: 'Lab Activity',
       type: 'heatmap',
       top: '5%',
@@ -125,17 +123,16 @@ export class LabSheet {
       }
     }];
 
-    this.renderChart(container, yAxisData, series);
+    this.renderChart(container);
   };
 
   populateAndRenderUsersData(usersData, allLabs) {
     const container = this.getChartContainer();
-    if (!container) return; // Exit if no container found
+    if (!container) return;
 
     let allSeriesData = [];
-    let yAxisData: [] = [];
     usersData?.forEach((user, nickname) => {
-      yAxisData.push(user?.nickname)
+      this.yAxisData.push(user?.nickname)
 
       const index = this.getIndexFromMap(usersData, nickname);
 
@@ -143,8 +140,7 @@ export class LabSheet {
       allSeriesData = allSeriesData.concat(seriesData[0].data);
     });
 
-    // Now allSeriesData contains the combined data for all users
-    const series = [{
+    this.series = [{
       name: 'Lab Activity',
       type: 'heatmap',
       data: allSeriesData || [],
@@ -153,15 +149,14 @@ export class LabSheet {
       }
     }] || [];
 
-    this.renderChart(container, yAxisData, series);
+    this.renderChart(container);
   };
 
-  renderChart(container, yAxisData, series) {
+  renderChart(container) {
     const chartInstance = echarts.init(container);
-
-    const option = heatmap(this.categories, yAxisData, series, bgPatternImg, 'Lab Time: Per Student');
-
+    const option = heatmap(this.categories, this.yAxisData, this.series, bgPatternImg, 'Lab Time: Per Student');
     chartInstance.setOption(option);
+    chartInstance.resize();
   };
 
   populateAndRenderCombinedUsersData(usersData, allLabs) {
@@ -179,7 +174,6 @@ export class LabSheet {
       allSeriesData = allSeriesData.concat(seriesData[0].data);
     });
 
-    // Now allSeriesData contains the combined data for all users
     const series = [{
       name: 'Lab Activity',
       type: 'heatmap',
@@ -189,19 +183,17 @@ export class LabSheet {
       }
     }];
 
-    this.renderChart(container, yAxisData, series);
+    this.renderChart(container);
   };
 
   prepareCombinedLabData(data) {
     const labActivities = new Map();
 
-    // Aggregate counts and nicknames for each lab
     data?.forEach(user => {
       user?.labActivity.forEach(lab => {
         if (!labActivities.has(lab.title)) {
           labActivities.set(lab.title, []);
         }
-        // Push an object containing count and nickname
         labActivities.get(lab.title).push({ count: lab.count, nickname: user.nickname, image: user.picture });
       });
     });
@@ -231,16 +223,14 @@ export class LabSheet {
     const heatmapData = labData.map((item, index) => [index, 0, item.value]);
     const titles = labData.map(item => item.title);
 
-    // Heatmap option
     const option = {
       title: {
-        top: 30,
+        top: '5%',
         left: 'center',
         text: chartTitle,
       },
       tooltip: {
         position: 'bottom',
-        // Now the formatter should refer to the series data indices
         formatter: function (params) {
           const dataIndex = params.dataIndex;
           const dataItem = labData[dataIndex];
@@ -255,8 +245,8 @@ export class LabSheet {
         repeat: 'repeat'
     },
       grid: {
-        height: '10%',
-        top: '10%'
+        height: '30%',
+        top: '15%'
       },
       xAxis: {
         type: 'category',
@@ -268,7 +258,7 @@ export class LabSheet {
       },
       visualMap: {
         min: 0,
-        max: 250, 
+        max: this.series[0]?.data.length !== 0 ? Math.max(...this.series[0]?.data?.map(item => item[2])) : 0, 
         calculable: true,
         orient: 'horizontal',
         left: 'center',

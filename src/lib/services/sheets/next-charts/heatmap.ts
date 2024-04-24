@@ -17,10 +17,10 @@ echarts.use([
 ]);
 
 export function heatmap(categories: any, yAxisData: any, series: any, bgPatternImg: HTMLImageElement, chartTitleString: string): EChartsOption {
-  const visualmapValue = series[0].data.length !== 0 ? Math.max(...series[0].data?.map(item => item[2])) : 0;
+  const visualmapValue = series[0]?.data.length !== 0 ? Math.max(...series[0].data?.map(item => item[2])) : 0;
   return {
     title: {
-      top: 30,
+      top: '5%',
       left: 'center',
       text: chartTitleString,
     },
@@ -34,8 +34,9 @@ export function heatmap(categories: any, yAxisData: any, series: any, bgPatternI
     grid: {
       left: '10%',
       right: '10%',
-      bottom: '30%',
+      bottom: '40%',
       top: '20%',
+      height: '40%',
       containLabel: true
     },
     xAxis: {
@@ -47,9 +48,10 @@ export function heatmap(categories: any, yAxisData: any, series: any, bgPatternI
       axisLabel: {
         rotate: -40,
         interval: 0,
-        textStyle: {
-          fontSize: 15
-        }
+        fontSize: 15
+      },
+      axisPointer: {
+        type: 'shadow'
       },
       position: 'bottom'
     },
@@ -61,9 +63,7 @@ export function heatmap(categories: any, yAxisData: any, series: any, bgPatternI
       },
       axisLabel: {
         interval: 0,
-        textStyle: {
-          fontSize: 15
-        }
+        fontSize: 15
       },
     },
     visualMap: {
@@ -72,7 +72,7 @@ export function heatmap(categories: any, yAxisData: any, series: any, bgPatternI
       calculable: true,
       orient: 'horizontal',
       left: 'center',
-      top: '5%'
+      bottom: '25%'
     },
     series: series
   }

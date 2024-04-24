@@ -8,9 +8,10 @@
     export let topics: Topic[] = [];
 
     let topicSheet: TopicSheet;
+    topicSheet = new TopicSheet(topics, user);
   
     onMount(() => {
-      topicSheet = new TopicSheet(topics, user);
+      topicSheet.populateSingleUserData(user);
       renderChart();
     });
 
@@ -22,16 +23,16 @@
 
     const renderChart = () => {
       if (topicSheet && user) {
-        topicSheet.populateSingleUserData(user);
-
+        const container = topicSheet.getChartContainer();
+        topicSheet.renderChart(container);
       }
     };
 
     window.addEventListener('focus', renderChart);
   </script>
-  
+
   <div class="h-screen">
-      <div id={"heatmap-container"} style="height: 100%; width:100%"></div>
-  </div>
+    <div id={"heatmap-container"} style="height: 100%; width:100%"></div>
+</div>
 
   

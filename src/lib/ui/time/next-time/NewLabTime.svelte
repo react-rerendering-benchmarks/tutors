@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import type { UserMetric } from "$lib/services/types/metrics";
     import { LabSheet } from "$lib/services/sheets/next-analytics/lab-sheet";
     import type { Lo } from "$lib/services/models/lo-types";
@@ -7,11 +7,35 @@
     export let user: UserMetric;
     export let allLabs: Lo[] = [];
   
-    const labSheet = new LabSheet(allLabs, user);
+    let labSheet = new LabSheet(allLabs, user);
   
     onMount(() => {
       labSheet.populateSingleUserData(user);
+      renderChart();
     });
+
+    // Destroy the chart instance when the component unmounts
+  onDestroy(() => {
+    if (labSheet) {
+      labSheet = null;
+    }
+  });
+
+  // Re-render the chart when the tab regains focus
+  const handleFocus = () => {
+    renderChart();
+  };
+
+  // Function to render the chart
+  const renderChart = () => {
+    if (labSheet && user) {
+      const container = labSheet.getChartContainer();
+      labSheet.renderChart(container);
+    }
+  };
+
+  // Listen for window focus event to trigger chart refresh
+  window.addEventListener('focus', handleFocus);
   </script>
   
   <div class="h-screen">

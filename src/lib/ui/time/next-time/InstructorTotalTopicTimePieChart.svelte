@@ -11,7 +11,8 @@
 
   onMount(() => {
     topicCountSheet = new TopicCountSheet();
-    renderCharts();
+    topicCountSheet.populateUsersData(userMap);
+    renderChart();
   });
 
    // Destroy the chart instances when the component unmounts
@@ -22,21 +23,21 @@
     }
   });
 
-  const renderCharts = () => {
+  const renderChart = () => {
     if (topicCountSheet) {
-      topicCountSheet.populateUsersData(userMap);
       topicCountSheet.renderChart();
     }
   };
 
-  // Re-render the charts when the tab regains focus
-  const handleFocus = () => {
-    renderCharts();
-  };
+  onDestroy(() => {
+      if (topicCountSheet) {
+        topicCountSheet = null;
+      }
+    });
 
-  window.addEventListener('focus', handleFocus);
+  window.addEventListener("focus", renderChart);
 </script>
 
 <div class="h-screen">
-  <div id="chart" class="ag-theme-balham h-5/6" />
+  <div id={"chart"} style="height: 100%; width:100%"></div>
 </div>
