@@ -49,7 +49,7 @@ export class LabSheet {
 
   populateLabTitles(allLabs: Lo[]) {
     const labTitles = allLabs.map(lab => lab.title.trim());
-    this.categories = new Set(labTitles); 
+    this.categories = new Set(labTitles);
   }
 
   getChartContainer() {
@@ -91,9 +91,9 @@ export class LabSheet {
     this.categories = new Set(labTitles);
 
     const seriesData = user?.labActivity?.map(activity => [
-      labTitles.indexOf(activity.title.trim()), 
-      0, 
-      activity.count 
+      labTitles.indexOf(activity.title.trim()),
+      0,
+      activity.count
     ])
 
     return [{
@@ -113,7 +113,7 @@ export class LabSheet {
     this.yAxisData = [user?.nickname];
 
     const seriesData = this.populateSingleUserSeriesData(user, allLabs);
-   this.series = [{
+    this.series = [{
       name: 'Lab Activity',
       type: 'heatmap',
       top: '5%',
@@ -243,7 +243,7 @@ export class LabSheet {
       backgroundColor: {
         image: bgPatternImg,
         repeat: 'repeat'
-    },
+      },
       grid: {
         height: '30%',
         top: '15%'
@@ -255,10 +255,14 @@ export class LabSheet {
       yAxis: {
         type: 'category',
         data: [''] // Single category axis
+        , axisLabel: {
+          interval: 0,
+          fontSize: 15
+        },
       },
       visualMap: {
         min: 0,
-        max: this.series[0]?.data.length !== 0 ? Math.max(...this.series[0]?.data?.map(item => item[2])) : 0, 
+        max: this.series[0]?.data.length !== 0 ? Math.max(...this.series[0]?.data?.map(item => item[2])) : 0,
         calculable: true,
         orient: 'horizontal',
         left: 'center',

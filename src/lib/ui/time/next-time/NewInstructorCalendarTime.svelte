@@ -8,22 +8,13 @@
   let calendarSheet = new CalendarSheet();
 
   onMount(() => {
-    if (userMap.size > 0) {
-      Array.from(userMap.values()).forEach((user) => {
-        calendarSheet.createChartContainer(user.nickname);
-        calendarSheet.renderChart(user);
-      });
-    } else {
-      calendarSheet.createChartContainer(userMap.values().next().value);
-      calendarSheet.renderChart(userMap.values().next().value);
-    }
+    createAndRenderChart();
   });
 
   // Destroy the chart instance when the component unmounts
   onDestroy(() => {
     if (calendarSheet) {
       // Clean up resources if needed
-      // For example: calendarSheet.destroy();
       calendarSheet = null;
     }
   });
@@ -36,7 +27,12 @@
   // Function to render the chart
   const renderChart = () => {
     if (calendarSheet && userMap.size > 0) {
-      if (userMap.size > 0) {
+      createAndRenderChart();
+    }
+  };
+
+  const createAndRenderChart = () => {
+    if (userMap.size > 0) {
         Array.from(userMap.values()).forEach((user) => {
           calendarSheet.createChartContainer(user.nickname);
           calendarSheet.renderChart(user);
@@ -45,7 +41,6 @@
         calendarSheet.createChartContainer(userMap.values().next().value);
         calendarSheet.renderChart(userMap.values().next().value);
       }
-    }
   };
 
   // Calculate the height of each chart container dynamically

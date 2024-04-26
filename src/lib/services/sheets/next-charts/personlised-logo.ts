@@ -1,11 +1,18 @@
 import * as echarts from 'echarts/core';
 import { GraphicComponent} from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
+import { backgroundPattern } from '../next-charts/next-charts-background-url';
 
 echarts.use([GraphicComponent, CanvasRenderer]);
+const bgPatternImg = new Image();
+bgPatternImg.src = backgroundPattern;
 
 export function nextTutorsAnalyticsLogo(logoText: string) {
 return {
+  backgroundColor: {
+    image: bgPatternImg,
+    repeat: 'repeat'
+  },
   graphic: {
     elements: [
       {
@@ -19,7 +26,7 @@ return {
           lineDash: [0, 200],
           lineDashOffset: 0,
           fill: 'transparent',
-          stroke: '#000',
+          stroke: '#0BE0C0',
           lineWidth: 1
         },
         keyframeAnimation: {
@@ -54,4 +61,3 @@ return {
   }
 };
 }
-

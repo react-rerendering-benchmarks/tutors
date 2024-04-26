@@ -18,7 +18,6 @@
   onDestroy(() => {
     if (labBoxPlot) {
       // Clean up resources if needed
-      // For example: labBoxPlot.destroy();
       labBoxPlot = null;
     }
   });

@@ -21,7 +21,7 @@
         session.onlineStatus = await firebaseAnalyticsService.getOnlineStatus(data.course, session);
         firebaseAnalyticsService.updateLogin(data.course.courseId, data.session);
         session.onlineStatus = await supabaseAnalyticsService.getOnlineStatus(data.course, session);
-        supabaseAnalyticsService.updateLogin(data.course.courseId, data.session);
+        supabaseAnalyticsService.updateLogin(data.session);
       }
     }
 

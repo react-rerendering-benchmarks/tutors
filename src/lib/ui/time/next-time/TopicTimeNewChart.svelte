@@ -13,7 +13,6 @@
         topicPieSheet.populateUserData(user);
         topicPieSheet.renderChart();
       }
-    
   });
 
   const renderChart = () => {

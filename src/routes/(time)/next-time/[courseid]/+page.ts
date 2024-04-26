@@ -5,7 +5,6 @@ import { fetchAllStudents, fetchStudentById } from "$lib/services/utils/metrics"
 import type { Course } from "$lib/services/models/lo-types";
 import type { UserMetric } from "$lib/services/types/metrics";
 
-
 export const ssr = false;
 
 const isStringArray = (test: any[]): boolean => {

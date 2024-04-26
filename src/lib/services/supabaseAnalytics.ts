@@ -77,7 +77,7 @@ export const supabaseAnalyticsService = {
     }
   },
 
-  async updateLogin(courseId: string, session: any) {
+  async updateLogin(session: any) {
     try {
       await addOrUpdateStudent(session.user);
     } catch (error: any) {

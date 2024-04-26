@@ -48,8 +48,8 @@ export class TopicSheet {
 
   populateTopicTitles(allTopics: Topic[]) {
     const topicTitles = allTopics.map(topic => topic.title.trim());
-    this.categories = new Set(topicTitles); 
-   }
+    this.categories = new Set(topicTitles);
+  }
 
   getChartContainer() {
     // Assuming there is one container for the whole heatmap
@@ -267,9 +267,13 @@ export class TopicSheet {
         type: 'category',
         data: [''] // Single category axis
       },
+      axisLabel: {
+        interval: 0,
+        fontSize: 15
+      },
       visualMap: {
         min: 0,
-        max: this.series[0]?.data.length !== 0 ? Math.max(...this.series[0]?.data?.map(item => item[2])) : 0, 
+        max: this.series[0]?.data.length !== 0 ? Math.max(...this.series[0]?.data?.map(item => item[2])) : 0,
         calculable: true,
         orient: 'horizontal',
         left: 'center',

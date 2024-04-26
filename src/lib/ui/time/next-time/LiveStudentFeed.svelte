@@ -9,7 +9,7 @@
 
   onMount(() => {
     liveStudentFeedSheet = new LiveStudentFeedSheet(Array.from(userMap.values()), courseName);
-    renderCharts();
+    liveStudentFeedSheet.renderCharts();
   });
 
   onDestroy(() => {
@@ -24,8 +24,7 @@
     }
   };
 
-  window.addEventListener('focus', renderCharts);
-
+  window.addEventListener("focus", renderCharts);
 </script>
 
 <div class="h-screen">
