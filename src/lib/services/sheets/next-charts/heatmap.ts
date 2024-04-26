@@ -34,9 +34,9 @@ export function heatmap(categories: any, yAxisData: any, series: any, bgPatternI
     grid: {
       left: '10%',
       right: '10%',
-      bottom: '40%',
-      top: '20%',
-      height: '40%',
+      bottom: '20%',
+      top: '10%',
+      height: '70%',
       containLabel: true
     },
     xAxis: {
