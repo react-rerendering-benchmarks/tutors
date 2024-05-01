@@ -15,13 +15,14 @@
   import TutorsTimeIndicator from "$lib/ui/navigators/buttons/TutorsTimeIndicator.svelte";
   import { currentCourse, onlineStatus, transitionKey } from "$lib/stores";
   import { firebaseAnalyticsService } from "$lib/services/firebaseAnalytics";
-  import { supabaseAnalyticsService } from "$lib/services/supabaseAnalytics";  
+  import { supabaseAnalyticsService } from "$lib/services/supabaseAnalytics";
   import { goto } from "$app/navigation";
   import { beforeUpdate } from "svelte";
   import { fade } from "svelte/transition";
+  import type { Session, SupabaseClient } from "@supabase/supabase-js";
 
-  export let session: any;
-  export let supabase: any;
+  export let session: Session;
+  export let supabase: SupabaseClient;
 
   const drawerStore = getDrawerStore();
   const toastStore = getToastStore();
