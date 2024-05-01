@@ -18,6 +18,11 @@ export interface DayMeasure {
   metric: number;
 }
 
+export interface UserSummary {
+  picture: string;
+  name: string;
+}
+
 // export interface UserMetric extends Token {
 //   title: string;
 //   count: number;
@@ -43,8 +48,8 @@ export interface UserMetric extends Token {
   routes: { [key: string]: string[] };
   metric: Metric;
   metrics: Metric[];
-  topics:TopicData[];
-  detailedLabInfo:TopicData[];
+  topics: TopicData[];
+  detailedLabInfo: TopicData[];
   labActivity: Metric[];
   calendarActivity: DayMeasure[];
   topicActivity: Metric[];
