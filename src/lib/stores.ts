@@ -3,7 +3,6 @@ import type { User } from "$lib/services/types/auth";
 import { localStorageStore } from "@skeletonlabs/skeleton";
 import type { Lo, Course } from "$lib/services/models/lo-types";
 import type { LoEvent } from "./services/types/presence";
-import type { SupabaseCourse, SupabaseLearningObject, SupabaseStudent } from "./services/types/supabase";
 
 export const revealSidebar = writable(false);
 export const revealOnline = writable(false);
@@ -27,8 +26,3 @@ export const coursesOnlineList = writable<LoEvent[]>([]);
 
 export const allStudentsOnline = writable(0);
 export const allStudentsOnlineList = writable<LoEvent[]>([]);
-
-export const currentSupabaseCourse: Writable<SupabaseCourse> = writable();
-export const supabaseCourses= writable<SupabaseCourse[]>([]);
-export const supabaseLearningObjects= writable<SupabaseLearningObject[]>([]);
-export const supabaseStudents= writable<SupabaseStudent[]>([]);

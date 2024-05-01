@@ -81,16 +81,6 @@ export interface TopicData {
   metrics: Metric[];
 }
 
-export interface AggregatedTopicData {
-  total_duration: number;
-  title: string;
-  calendar_id: string;
-}
-
-export interface TopicPaths {
-  [parentTopic: string]: string[];
-}
-
 export type StudentLoUpdate = (kind: string, event: StudentLoEvent) => void;
 
 export type MetricUpdate = (user: User, topic: Topic, lab: Lo, time: number) => void;

@@ -1,6 +1,5 @@
 import type { Course, Lo } from "../models/lo-types";
 import { db } from "$lib/db/client";
-import { supabaseStudents } from "$lib/stores";
 import type { User } from "@supabase/supabase-js";
 import { formatDate } from "./metrics";
 
@@ -100,10 +99,6 @@ export async function addOrUpdateStudent(userDetails: User) {
     });
 
   if (error) throw error;
-
-  if (data) {
-    supabaseStudents.update(cur => [...cur, data[0]]);
-  }
 };
 
 export async function updateLastAccess(key: string, id: string, table: any): Promise<any> {
