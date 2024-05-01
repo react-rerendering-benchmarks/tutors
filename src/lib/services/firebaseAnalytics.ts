@@ -1,7 +1,7 @@
 import { get } from "svelte/store";
 import { updateLo } from "$lib/services/utils/all-course-access";
 import type { Course, Lo } from "$lib/services/models/lo-types";
-import type { TokenResponse } from "$lib/services/types/auth";
+import type { Session } from "@supabase/supabase-js";
 import { currentCourse, currentLo, currentUser, onlineStatus } from "$lib/stores";
 
 import { readValue, sanitise, updateCalendar, updateCount, updateCountValue, updateLastAccess, updateStr, updateVisits } from "$lib/services/utils/firebase";
@@ -9,7 +9,7 @@ import { presenceService } from "./presence";
 import { PUBLIC_SUPABASE_URL } from "$env/static/public";
 
 let course: Course;
-let user: TokenResponse;
+let user: Session;
 let lo: Lo;
 
 currentCourse.subscribe((current) => {
@@ -25,20 +25,20 @@ currentLo.subscribe((current) => {
 export const firebaseAnalyticsService = {
   loRoute: "",
 
-  learningEvent(params: Record<string, string>, session: TokenResponse) {
+  learningEvent(params: Record<string, string>, session: Session) {
     if (params.loid) {
       this.loRoute = sanitise(params.loid);
     }
     this.reportPageLoad(session);
   },
 
-  setOnlineStatus(status: boolean, session: TokenResponse) {
+  setOnlineStatus(status: boolean, session: Session) {
     const onlineStatus = status ? "online" : "offline";
     const key = `${course.courseId}/users/${sanitise(session.user.email)}/onlineStatus`;
     updateStr(key, onlineStatus);
   },
 
-  async getOnlineStatus(course: Course, session: TokenResponse): Promise<string> {
+  async getOnlineStatus(course: Course, session: Session): Promise<string> {
     if (!course || !user) {
       return "online";
     }
@@ -48,7 +48,7 @@ export const firebaseAnalyticsService = {
     return status || "online";
   },
 
-  reportPageLoad(session: TokenResponse) {
+  reportPageLoad(session: Session) {
     if (!lo || PUBLIC_SUPABASE_URL === "XXX") return;
     updateLastAccess(`${course.courseId}/usage/${this.loRoute}`, course.title);
     updateVisits(course.courseUrl.substring(0, course.courseUrl.indexOf(".")));
@@ -66,7 +66,7 @@ export const firebaseAnalyticsService = {
     }
   },
 
-  updatePageCount(session: TokenResponse) {
+  updatePageCount(session: Session) {
     if (!lo) return;
     updateLastAccess(`${course.courseId}/usage/${this.loRoute}`, course.title);
     updateCount(course.courseId);

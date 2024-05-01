@@ -1,13 +1,22 @@
 import { get } from "svelte/store";
 import type { Course, Lo } from "$lib/services/models/lo-types";
-import type { TokenResponse } from "$lib/services/types/auth";
+import type { Session } from "@supabase/supabase-js";
 import { currentCourse, currentLo, currentUser, onlineStatus } from "$lib/stores";
-import { readValue, updateStudentsStatus, updateLastAccess, storeStudentCourseLearningObjectInSupabase, updateStudentCourseLoInteractionDuration, updateDuration, updateCalendarDuration, addOrUpdateStudent } from "$lib/services/utils/supabase";
+import {
+  readValue,
+  updateStudentsStatus,
+  updateLastAccess,
+  storeStudentCourseLearningObjectInSupabase,
+  updateStudentCourseLoInteractionDuration,
+  updateDuration,
+  updateCalendarDuration,
+  addOrUpdateStudent
+} from "$lib/services/utils/supabase";
 import { presenceService } from "./presence";
 import { formatDate } from "./utils/metrics";
 
 let course: Course;
-let user: TokenResponse;
+let user: Session;
 let lo: Lo;
 let loid: string;
 
@@ -22,7 +31,7 @@ currentLo.subscribe((current) => {
 });
 
 export const supabaseAnalyticsService = {
-  learningEvent(params: any, session: TokenResponse) {
+  learningEvent(params: any, session: Session) {
     try {
       loid = params?.params?.loid;
       this.reportPageLoad(params, session);
@@ -31,7 +40,7 @@ export const supabaseAnalyticsService = {
     }
   },
 
-  setOnlineStatus(status: boolean, session: TokenResponse) {
+  setOnlineStatus(status: boolean, session: Session) {
     try {
       const onlineStatus = status ? "online" : "offline";
       updateStudentsStatus(session.user.user_metadata.user_name, onlineStatus);
@@ -40,7 +49,7 @@ export const supabaseAnalyticsService = {
     }
   },
 
-  async getOnlineStatus(course: Course, session: TokenResponse): Promise<string | undefined> {
+  async getOnlineStatus(course: Course, session: Session): Promise<string | undefined> {
     try {
       if (!course || !user) {
         return "online";
@@ -53,7 +62,7 @@ export const supabaseAnalyticsService = {
     }
   },
 
-  reportPageLoad(params: any, session: TokenResponse) {
+  reportPageLoad(params: any, session: Session) {
     try {
       storeStudentCourseLearningObjectInSupabase(course, params.data, params?.params?.loid, lo, session?.user);
       presenceService.sendLoEvent(course, lo, get(onlineStatus), session?.user);
@@ -62,7 +71,7 @@ export const supabaseAnalyticsService = {
     }
   },
 
-  async updatePageCount(session: TokenResponse) {
+  async updatePageCount(session: Session) {
     try {
       if (session?.user) {
         if (loid) updateStudentCourseLoInteractionDuration(course.courseId, session?.user.user_metadata.user_name, loid);
