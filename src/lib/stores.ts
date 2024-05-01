@@ -1,5 +1,5 @@
 import { writable, type Writable } from "svelte/store";
-import type { User } from "$lib/services/types/auth";
+import type { User } from "@supabase/supabase-js";
 import { localStorageStore } from "@skeletonlabs/skeleton";
 import type { Lo, Course } from "$lib/services/models/lo-types";
 import type { LoEvent } from "./services/types/presence";
