@@ -1,5 +1,4 @@
 import type { Topic } from "$lib/services/models/lo-types";
-import type { Token, User } from "./auth";
 import type { IconType } from "$lib/services/models/lo-types";
 import type { Lo } from "$lib/services/models/lo-types";
 
@@ -34,7 +33,7 @@ export interface UserSummary {
 //   calendarActivity: DayMeasure[];
 // }
 
-export interface UserMetric extends Token {
+export interface UserMetric{
   title: string;
   count: number;
   last: string;
