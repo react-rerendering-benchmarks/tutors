@@ -176,7 +176,7 @@ export async function handleInteractionData(courseId: string, studentId: string,
   await manageStudentCourseLo(courseId, studentId, loId);
 };
 
-export function studentInteractionsUpdates(callback) {
+export function studentInteractionsUpdates(callback: (arg: any) => void) {
   db
     .channel('schema-db-changes')
     .on('postgres_changes', {
