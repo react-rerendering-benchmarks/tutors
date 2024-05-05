@@ -3,7 +3,7 @@ import type { PageLoad } from "./$types";
 import { courseService } from "$lib/services/course";
 import { fetchAllStudents, fetchStudentById } from "$lib/services/utils/metrics";
 import type { Course } from "$lib/services/models/lo-types";
-import type { UserMetric } from "$lib/services/types/metrics";
+import type { UserMetric, StudentsInteraction } from "$lib/services/types/metrics";
 
 export const ssr = false;
 
@@ -17,11 +17,11 @@ export const load: PageLoad = async ({ parent, params, fetch }) => {
     const course: Course = await courseService.readCourse(params.courseid, fetch);
     const allLabs = course.wallMap?.get("lab");
     const allTopics = course.los;
-    const user: UserMetric  = await fetchStudentById(params.courseid, data.session, allLabs, allTopics);
+    const user: StudentsInteraction | null = await fetchStudentById(params.courseid, data.session, allLabs, allTopics);
     const allLos = user?.topics.map((topic) => topic.lo_title);
-    const users: Map<string, UserMetric> = await fetchAllStudents(params.courseid, allLabs, allTopics);
+    const users: Map<string, StudentsInteraction> = await fetchAllStudents(params.courseid, allLabs, allTopics);
     course.enrollment = Array.from(users.keys());
-    const enrolledUsers: Map<string, UserMetric> = new Map<string, UserMetric>();
+    const enrolledUsers: Map<string, StudentsInteraction> = new Map<string, StudentsInteraction>();
     if (course.hasEnrollment && course.enrollment) {
       for (let i = 0; i < course.enrollment.length; i++) {
         const enrolledUser = users.get(course.enrollment[i]);

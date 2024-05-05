@@ -6,7 +6,7 @@ import {
 } from 'echarts/components';
 import { HeatmapChart } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
-import type { UserMetric } from '$lib/services/types/metrics';
+import type { UserMetric, StudentsInteraction } from '$lib/services/types/metrics';
 import { backgroundPattern } from '../next-charts/next-charts-background-url';
 import { heatmap } from '../next-charts/heatmap';
 import type { Lo } from '$lib/services/models/lo-types';
@@ -24,8 +24,13 @@ bgPatternImg.src = backgroundPattern;
 
 export class LabSheet {
   chartRendered: boolean = false;
+  categories: Set<string>;
+  labs: Lo[];
+  users: StudentsInteraction[];
+  chartInstances: Map<any, any>;
+  user: StudentsInteraction;
 
-  constructor(allLabs, userData) {
+  constructor(allLabs: Lo[], userData: StudentsInteraction[]) {
     this.chartRendered = false;
     this.chartInstances = new Map();
     this.labs = allLabs; // Array of lab titles
@@ -66,14 +71,14 @@ export class LabSheet {
     return keysArray.indexOf(key);
   }
 
-  populateSeriesData(user: UserMetric, userIndex: number, allLabs) {
+  populateSeriesData(user: UserMetric, userIndex: number, allLabs: Lo []) {
     const labTitles = allLabs.map(lab => lab.title.trim());
     this.categories = new Set(labTitles);
 
     const seriesData = user?.labActivity?.map(activity => [
       labTitles.indexOf(activity.title.trim()),
       userIndex, // yIndex is now the index of the user in usersData array
-      activity.count
+      activity.duration
     ])
 
     return [{
@@ -93,7 +98,7 @@ export class LabSheet {
     const seriesData = user?.labActivity?.map(activity => [
       labTitles.indexOf(activity.title.trim()),
       0,
-      activity.count
+      Math.round(activity.duration) /2
     ])
 
     return [{
@@ -194,7 +199,7 @@ export class LabSheet {
         if (!labActivities.has(lab.title)) {
           labActivities.set(lab.title, []);
         }
-        labActivities.get(lab.title).push({ count: lab.count, nickname: user.nickname, image: user.picture });
+        labActivities.get(lab.title).push({ count: Math.round(lab.duration/2), nickname: user.nickname, image: user.picture });
       });
     });
 

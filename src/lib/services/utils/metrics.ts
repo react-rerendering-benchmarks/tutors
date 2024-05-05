@@ -1,5 +1,5 @@
 import { child, get, getDatabase, ref } from "firebase/database";
-import type { DayMeasure, Metric, UserMetric } from "$lib/services/types/metrics";
+import type { DayMeasure, Metric, RouteTitleDuration, UserMetric, StudentsInteraction } from "$lib/services/types/metrics";
 import type { Lo } from "$lib/services/models/lo-types";
 import { db } from "$lib/db/client";
 import { getAllCalendarData } from "./supabase";
@@ -167,48 +167,38 @@ export function formatDate(date: Date): string {
 }
 
 /*****Supabase ********/
-export async function fetchStudentById(courseUrl: string, session: any, allLabs, allTopics): Promise<UserMetric|null> {
+export async function fetchStudentById(courseUrl: string, session: any, allLabs: RouteTitleDuration[], allTopics: RouteTitleDuration[]): Promise<StudentsInteraction | null> {
   let user = null;
   const courseBase = courseUrl.substring(0, courseUrl.indexOf("."));
-    const { data: student, error: studentError } = await db.rpc('fetch_course_overview_for_student', {
-      user_name: session.user.user_metadata.user_name,
-      course_base: courseBase
-    });
+  const { data: student, error: studentError } = await db.rpc('fetch_course_overview_for_student', {
+    user_name: session.user.user_metadata.user_name,
+    course_base: courseBase
+  });
 
-    if (studentError) {
-      throw studentError;
-    }
+  if (studentError) {
+    throw studentError;
+  }
 
-    user = student[0];
-if(user) {
-    await updateStudentMetrics(courseBase, user);
+  user = student[0];
+  if (user) {
+    await updateStudentLabActivity(courseBase, user);
     populateStudentCalendar(courseBase, user);
     if (allLabs) {
       populateDetailedLabInfo(courseBase, user);
-      populateStudentsLabUsage(user, allLabs);
     }
 
     if (allTopics) {
       await populateTopics(courseBase, user);
       await updateStudentMetricsTopicData(courseBase, user);
-
-      user.metric.metrics.forEach(item1 => {
-        allTopics.forEach(item2 => {
-          if (item2.route.includes(item1.route)) {
-            item1.title = item2.title;
-          }
-        });
-      });
-      populateStudentsTopicUsage(user, allTopics);
     }
     return user;
-  }else{
+  } else {
     return null;
   }
-  
+
 };
 
-export async function fetchAllStudents(courseUrl: string, allLabs, allTopics): Promise<Map<string, UserMetric>> {
+export async function fetchAllStudents(courseUrl: string, allLabs: Lo[], allTopics: RouteTitleDuration[]): Promise<Map<string, StudentsInteraction>> {
   let user = null;
   const users = new Map<string, UserMetric>();
   try {
@@ -223,25 +213,16 @@ export async function fetchAllStudents(courseUrl: string, allLabs, allTopics): P
 
     for (const student of students) {
       user = student;
-      await updateStudentMetrics(courseBase, user);
+      await updateStudentLabActivity(courseBase, user);
       populateStudentCalendar(courseBase, user);
       if (allLabs) {
         populateDetailedLabInfo(courseBase, user);
-        populateStudentsLabUsage(user, allLabs);
       }
 
       if (allTopics) {
         await populateTopics(courseBase, user);
         await updateStudentMetricsTopicData(courseBase, user);
       }
-      user.metric.metrics.forEach(item1 => {
-        allTopics.forEach(item2 => {
-          if (item2.route.includes(item1.route)) {
-            item1.title = item2.title;
-          }
-        });
-      });
-      populateStudentsTopicUsage(user, allTopics);
       users.set(user.nickname, user);
 
     }
@@ -251,7 +232,7 @@ export async function fetchAllStudents(courseUrl: string, allLabs, allTopics): P
   return users;
 };
 
-async function updateStudentMetrics(courseBase: string, user: any) {
+async function updateStudentLabActivity(courseBase: string, user: StudentsInteraction) {
   const { data: metrics, error: metricsError } = await db.rpc('get_lab_data', {
     user_name: user.nickname,
     course_base: courseBase
@@ -260,22 +241,10 @@ async function updateStudentMetrics(courseBase: string, user: any) {
   if (metricsError) {
     throw metricsError;
   }
-
-  user.metric = {
-    id: 'lab',
-    metrics: []
-  };
-
-  metrics.forEach((m) => {
-    const metricObject: { [key: string]: number | string | undefined } = {};
-    metricObject['route'] = m.lochild ? removeTrailingSlash(m.lochild) : undefined;
-    metricObject['count'] = m.total_duration;
-
-    user.metric.metrics.push(metricObject);
-  });
+  user.labActivity = metrics;
 }
 
-async function updateStudentMetricsTopicData(courseBase: string, user: any) {
+async function updateStudentMetricsTopicData(courseBase: string, user: StudentsInteraction) {
   const { data: metrics, error: metricsError } = await db.rpc('get_topic_data', {
     user_name: user.nickname,
     course_base: courseBase
@@ -284,26 +253,31 @@ async function updateStudentMetricsTopicData(courseBase: string, user: any) {
   if (metricsError) {
     throw metricsError;
   }
+  user.topicActivity = [];
 
-  user.metric = {
-    id: 'topic',
-    metrics: []
-  };
+  metrics.forEach((m: { title: string; loparent: string; duration: number; }) => {
+    const title = m.title;
+    const route = m.loparent ? removeTrailingSlash(m.loparent) : undefined;
+    const duration = m.duration;
 
-  metrics.forEach((m) => {
-    const metricObject: { [key: string]: number | string | undefined } = {};
-    metricObject['route'] = m.loparent ? removeTrailingSlash(m.loparent) : undefined;
-    metricObject['count'] = m.total_duration;
+    // Check if the route contains the word "course"
+    if (!route?.includes('course')) {
+      const metricObject = {
+        title: title,
+        route: route,
+        duration: duration
+      };
 
-    user.metric.metrics.push(metricObject);
+      user.topicActivity.push(metricObject);
+    }
   });
-}
+};
 
 async function populateStudentCalendar(courseId: string, user: UserMetric) {
   user.calendarActivity = [];
   let data = await getAllCalendarData(courseId, user.nickname)
   if (data) {
-    data.forEach(item => {
+    data.forEach((item: { id: any; duration: any; }) => {
       const calendarId = item.id;
       const dayMeasure: DayMeasure = {
         date: calendarId,
@@ -312,58 +286,6 @@ async function populateStudentCalendar(courseId: string, user: UserMetric) {
       };
       user.calendarActivity.push(dayMeasure);
     });
-  }
-}
-
-async function populateStudentsLabUsage(user: UserMetric, allLabs: Lo[]) {
-  user.labActivity = [];
-  for (const lab of allLabs) {
-    const labActivity = findInStudent(lab.route, user);
-    if (labActivity !== null) {
-      labActivity.title = lab.title;
-      user.labActivity.push(labActivity);
-    }
-  }
-}
-
-function findInStudent(title: string, user: any) {
-  return findInStudentMetrics(title, user.metric.metrics);
-}
-
-function findInStudentMetric(title: string, metric: any) {
-  if (title === metric.route) {
-    return metric;
-  } else if (metric.metrics?.length > 0 || metric.metrics?.count > 0) {
-    return findInStudentMetrics(title, metric.metrics);
-  } else {
-    return null;
-  }
-}
-
-function findInStudentMetrics(title: string, calendar: any): Metric {
-  let result: any = null;
-  for (const metric of calendar) {
-    if (metric.id === "ab" || metric.id === "alk" || metric.id === "ideo") {
-      // console.log("ignoring spurious data"); as result of bug in types
-      // since fixed, but bad data in some user dbs.
-    } else {
-      result = findInStudentMetric(title, metric);
-      if (result != null) {
-        return result;
-      }
-    }
-  }
-  return result;
-}
-
-async function populateStudentsTopicUsage(user: UserMetric, allTopics: Lo[]) {
-  user.topicActivity = [];
-  for (const topic of allTopics) {
-    const topicActivity: Metric = findInStudent(topic.route, user);
-    if (topicActivity !== null) {
-      topicActivity.title = topic.title;
-      user.topicActivity.push(topicActivity);
-    }
   }
 }
 
@@ -380,7 +302,6 @@ async function populateTopics(courseBase: string, user: UserMetric) {
   if (topicsError) {
     throw topicsError;
   }
-
   user.topics = topics;
 };
 
@@ -394,4 +315,4 @@ async function populateDetailedLabInfo(courseBase: string, user: UserMetric) {
     throw detailedLabInfoError;
   }
   user.detailedLabInfo = detailedLabInfo;
-}
+};

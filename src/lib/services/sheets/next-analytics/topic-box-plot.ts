@@ -29,7 +29,7 @@ export class TopicBoxPlot {
     userDataMap.forEach((userData, nickname) => {
       userNicknames.push(nickname); // Collect nicknames for the y-axis
 
-      const counts = userData?.topicActivity.map(activity => activity.count);
+      const counts = userData?.topicActivity.map(activity => activity.duration);
       counts.sort((a, b) => a - b);
 
       const min = d3.min(counts);
@@ -55,7 +55,7 @@ export class TopicBoxPlot {
           topicActivities.set(topic.title, []);
         }
         // Push an object containing count and nickname
-        topicActivities.get(topic.title).push({ count: topic.count, nickname: user.nickname });
+        topicActivities.get(topic.title).push({ count: topic.duration, nickname: user.nickname });
       });
     });
 

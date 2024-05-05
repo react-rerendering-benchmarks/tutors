@@ -87,9 +87,9 @@ export class TopicCountSheet {
       user.topicActivity.forEach(activity => {
         let existing = acc.find(item => item.name === activity.title);
         if (existing) {
-          existing.value += activity.count;
+          existing.value += activity.duration;
         } else {
-          acc.push({ value: activity.count, name: activity.title });
+          acc.push({ value: activity.duration, name: activity.title });
         }
       });
       return acc;
@@ -105,7 +105,7 @@ export class TopicCountSheet {
     if (this.users === null) {
 
       const singleUserInnerData = this.user?.topicActivity.map((topic) => ({
-        value: topic.count,
+        value: topic.duration,
         name: topic.title
       }));
 

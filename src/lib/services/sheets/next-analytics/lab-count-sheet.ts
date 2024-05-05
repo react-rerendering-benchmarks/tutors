@@ -108,7 +108,7 @@ export class LabCountSheet {
         show: false
       },
       data: this.user?.labActivity.map((lab) => ({
-        value: Math.round(lab.count / 2) || 0,
+        value: Math.round(lab.duration / 2) || 0,
         name: lab.title
       })) || []
     };

@@ -70,11 +70,10 @@ export class TopicSheet {
     const topicTitles = topics.map(topic => topic.title.trim());
     this.categories = new Set(topicTitles);
 
-    //const seriesData = usersData.forEach((user, userIndex) => 
     const seriesData = user?.topicActivity?.map(activity => [
       topicTitles.indexOf(activity.title.trim()),
       userIndex, // yIndex is now the index of the user in usersData array
-      activity.count
+      activity.duration
     ])
 
     return [{
@@ -94,7 +93,7 @@ export class TopicSheet {
     const seriesData = user?.topicActivity.map(activity => [
       topicTitles.indexOf(activity.title.trim()),
       0,
-      activity.count
+      activity.duration
     ])
 
     return [{
@@ -202,7 +201,7 @@ export class TopicSheet {
           topicActivities.set(topic.title, []);
         }
         // Push an object containing count and nickname
-        topicActivities.get(topic.title).push({ count: topic.count, nickname: user.nickname });
+        topicActivities.get(topic.title).push({ count: topic.duration, nickname: user.nickname });
       });
     });
 

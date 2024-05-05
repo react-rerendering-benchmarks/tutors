@@ -29,7 +29,7 @@ export class LabBoxPlot {
     userDataMap.forEach((userData, nickname) => {
       userNicknames.push(nickname); // Collect nicknames for the y-axis
 
-      const counts = userData?.labActivity.map(activity => activity.count);
+      const counts = userData?.labActivity.map(activity => activity.duration);
       counts.sort((a, b) => a - b);
 
       const min = d3.min(counts);
@@ -55,7 +55,7 @@ export class LabBoxPlot {
           labActivities.set(lab.title, []);
         }
         // Push an object containing count and nickname
-        labActivities.get(lab.title).push({ count: lab.count, nickname: user.nickname });
+        labActivities.get(lab.title).push({ count: lab.duration, nickname: user.nickname });
       });
     });
 

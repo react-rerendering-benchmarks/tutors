@@ -44,14 +44,50 @@ export interface UserMetric{
   nickname: string;
   duration: number;
   calendar_id: Date;
-  routes: { [key: string]: string[] };
   metric: Metric;
-  metrics: Metric[];
-  topics: TopicData[];
-  detailedLabInfo: TopicData[];
-  labActivity: Metric[];
+  metrics: RouteTitleDuration[];
+  topics: CompositeData[];
+  detailedLabInfo: CompositeData[];
+  labActivity: RouteTitleDuration[];
   calendarActivity: DayMeasure[];
-  topicActivity: Metric[];
+  topicActivity: RouteTitleDuration[];
+}
+
+export interface StudentsInteraction extends student, course{
+  topics: CompositeData[];
+  detailedLabInfo: CompositeData[];
+  labActivity: RouteTitleDuration[];
+  calendarActivity: DayMeasure[];
+  topicActivity: RouteTitleDuration[];
+}
+
+export interface student{
+  name: string;
+  email: string;
+  picture: string;
+  onlinestatus: boolean;
+  nickname: string;
+}
+
+export interface course{
+  title: string;
+  last: string;
+  duration: string;
+  count: number;
+}
+
+export interface CompositeData {
+  calendar_id: string;
+  title: string;
+  lo_title: string;
+  total_duration: number;
+  lab_title: string;
+}
+
+export interface RouteTitleDuration {
+  route: string | undefined;
+  title: string | null;
+  duration: number;
 }
 
 export interface StudentMetric {
@@ -74,15 +110,6 @@ export interface StudentLoEvent {
   loRoute: string;
   loIcon?: IconType;
   timeout: number;
-}
-
-export interface TopicData {
-  calendar_id: string;
-  title: string;
-  lo_title: string;
-  total_duration: number;
-  lab_title: string;
-  metrics: Metric[];
 }
 
 export type StudentLoUpdate = (kind: string, event: StudentLoEvent) => void;
