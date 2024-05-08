@@ -269,7 +269,7 @@ async function updateStudentMetrics(courseBase: string, user: any) {
   metrics.forEach((m) => {
     const metricObject: { [key: string]: number | string | undefined } = {};
     metricObject['route'] = m.lochild ? removeTrailingSlash(m.lochild) : undefined;
-    metricObject['count'] = m.total_duration;
+    metricObject['count'] = m.count;
 
     user.metric.metrics.push(metricObject);
   });
@@ -293,7 +293,7 @@ async function updateStudentMetricsTopicData(courseBase: string, user: any) {
   metrics.forEach((m) => {
     const metricObject: { [key: string]: number | string | undefined } = {};
     metricObject['route'] = m.loparent ? removeTrailingSlash(m.loparent) : undefined;
-    metricObject['count'] = m.total_duration;
+    metricObject['count'] = m.count;
 
     user.metric.metrics.push(metricObject);
   });
