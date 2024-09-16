@@ -90,7 +90,7 @@ export class BasePieChart<T> {
     const loTitle = lo.title;
     // Add timeActive to the total time for the title
     if (this.titleTimesMap.has(title)) {
-      // casting as unknow increses type safety and then casts as T which is number in this case
+      // casting as unknown increses type safety and then casts as T which is number in this case
       this.titleTimesMap.set(title, ((this.titleTimesMap.get(title)! as number) + timeActive) as unknown as T);
     } else {
       this.titleTimesMap.set(title, timeActive as unknown as T);

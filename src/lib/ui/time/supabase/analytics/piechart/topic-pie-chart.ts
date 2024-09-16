@@ -60,7 +60,7 @@ export class TopicPieChart extends BasePieChart<number> {
         this.userIds.forEach((userId) => {
           const timeActive = lo.learningRecords?.get(userId)?.timeActive || 0;
           this.updateMaps(lo, timeActive, (lo) =>
-            lo.parentTopic?.type === "topic" ? lo.parentTopic.title : lo.parentLo?.parentTopic?.type === "topic" ? lo.parentLo?.parentTopic?.title : lo.title
+            lo.parentLo?.type === "topic" ? lo.parentLo.title : lo.title
           );
         });
       } else {

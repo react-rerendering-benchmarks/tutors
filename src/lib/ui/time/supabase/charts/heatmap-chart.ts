@@ -14,7 +14,7 @@ export function heatmap(categories: Set<string>, yAxisData: string[], series: He
   };
 
   if (series?.data) {
-    if (series.name === "lab activity for all users" || series.name === "topic activity for all users") {
+    if (series.name === "student engagement for lab" || series.name === "student engagement for topic") {
       gridConfig = {
         left: "15%",
         right: "10%",
